@@ -52,11 +52,13 @@ void daq::daq_task_cb(){
 	 */
 	do{
 		sensor = daq_t::sensors[index];
-		if(sensor->update()){
-			index ++;
-		}else{
-			system_t::BIOS_alert(BIOS_ALERT_TASK_FAIL);
-			system_t::BIOS_reboot(BIOS_REBOOT_OS);
+		if(sensor){ // Valid check of the sensor
+			if(sensor->update()){
+				index ++;
+			}else{
+				system_t::BIOS_alert(BIOS_ALERT_TASK_FAIL);
+				system_t::BIOS_reboot(BIOS_REBOOT_OS);
+			}
 		}
 	}while(sensor);
 }
