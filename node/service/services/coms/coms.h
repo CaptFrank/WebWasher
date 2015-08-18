@@ -18,6 +18,10 @@
  */
 #define TOPIC_DELIMITER				("/")
 #define COMPARE_SUCCESS 			(0x00)
+#define COMS_SERVICE_DELAY			(1000) // Delay 1 sec
+
+#define ARGUMENT_ERROR				("ARGUMENT ERROR")
+#define ARGUMENT_ERROR_LEN			(strlen(ARGUMENT_ERROR))
 
 /*
  * Local Typedefs

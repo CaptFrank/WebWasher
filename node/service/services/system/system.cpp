@@ -21,6 +21,12 @@
 void system_srv::BIOS_setup(sensor_t* sensors){
 
 	/*
+	 * Create the inclass queue on the heap
+	 */
+	system_t::suspend_queue = \
+			new queue_t<thread_id_t>();
+
+	/*
 	 * Setup the heartbeat cache
 	 */
 	system_t::heartbeat_cache.fxn 	= system_t::update_heartbeat_cache;
@@ -300,6 +306,8 @@ void system_srv::BIOS_update(cache_t type = CACHE_TYPE_ALL){
 				rc = true;
 			}
 			else{
+				NOTIFY_ERROR("update failed: " \
+						+ String(type));
 				rc = false;
 			}
 		}else{

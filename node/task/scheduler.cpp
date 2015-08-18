@@ -53,6 +53,10 @@ status_code_t scheduler::add_task(task_t* task){
 	task->next = NULL;
 	last = task;
 
+	/*
+	 * Notify
+	 */
+	NOTIFY_INFO("Added task: " + String(task->_id));
 	return STATUS_OK;
 }
 
@@ -65,9 +69,13 @@ status_code_t scheduler::add_task(task_t* task){
 status_code_t scheduler::delete_task(task_t* task){
 
 	/*
+	 * Notify
+	 */
+	NOTIFY_INFO("Deleting task: " + String(task->_id));
+
+	/*
 	 * delete the task
 	 */
-
 	if (task->prev == NULL) {
 		if (task->next == NULL) {
 
@@ -124,6 +132,11 @@ void scheduler::disable_all(){
 		temp->disable();
 		temp = temp->next;
 	}
+
+	/*
+	 * Notify
+	 */
+	NOTIFY_INFO("Disabling all tasks.");
 }
 
 /**
@@ -141,6 +154,11 @@ status_code_t scheduler::enable_all(){
 		temp->enable();
 		temp = temp->next;
 	}
+
+	/*
+	 * Notify
+	 */
+	NOTIFY_INFO("Enabled all tasks.");
 	return STATUS_OK;
 }
 
@@ -153,13 +171,13 @@ void scheduler::disable_tasks(){
 	 * Temp
 	 */
 	task_t *current = first;
-	uint8_t count	= system_t::suspend_queue->count();
+	int counter	= system_t::suspend_queue->count();
 
-	if (count > 0){
+	if (counter > 0){
 		/*
 		 * disable the tasks
 		 */
-		for(uint8_t i = 0; i < count, i++){
+		for(int i = 0; i < counter, i++){
 
 			/*
 			 * Check the disable queue for disabling thread
@@ -174,7 +192,7 @@ void scheduler::disable_tasks(){
 				 * disable the task
 				 */
 				if(current->_id == id){
-					current->_enabled = false;
+					current->disable();
 				}
 
 				/*
@@ -193,14 +211,14 @@ void scheduler::disable_tasks(){
 void scheduler::run(){
 
 	/*
-	 * Check to see if we need to disable any tasks
-	 */
-	disable_tasks();
-
-	/*
 	 * Update the state
 	 */
 	system_t::BIOS_state(SYS_STATE_ACTIVE);
+
+	/*
+	 * Check to see if we need to disable any tasks
+	 */
+	disable_tasks();
 
 	/*
 	 * Temp
@@ -235,6 +253,9 @@ void scheduler::run(){
 					 * Disable
 					 */
 					current->disable();
+					NOTIFY_INFO("Thread " + \
+							String(current->_id) + \
+							" dead.");
 				}
 				break;
 			}
@@ -259,7 +280,6 @@ void scheduler::run(){
 					 * Update the time
 					 */
 					if (current->_iterations > 0){
-
 						current->iIterations--;  // do not decrement (-1) being a signal of eternal task
 					}
 
@@ -294,7 +314,7 @@ void scheduler::run(){
 				}
 			}
 
-		} while (false); //guaranteed single run - allows use of "break" to exit
+		} while (false); // guaranteed single run - allows use of "break" to exit
 
 		/*
 		 * Update to the next task

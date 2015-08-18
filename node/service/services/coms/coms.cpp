@@ -347,6 +347,7 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 * Disconnect interfaces
 		 */
 		case COMMAND_TYPE_DISCONNECT:
+			if(msg->length > 1) return ERR_BAD_FORMAT;
 			rc = disconnect((interface_t)*packet);
 			free(packet);
 			return rc;
@@ -355,6 +356,7 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 * Reboot a selected service/driver
 		 */
 		case COMMAND_TYPE_REBOOT:
+			if(msg->length > 1) return ERR_BAD_FORMAT;
 			system_t::BIOS_reboot((bios_reboot_t)*packet);
 			free(packet);
 			return rc;
@@ -363,7 +365,10 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 * Request a status update
 		 */
 		case COMMAND_TYPE_STATUS:
-			rc = send(MSG_TYPE_STATUS, NULL);
+
+			// Format the message
+			msg_t* json = system_t::format.format(MSG_TYPE_STATUS);
+			rc = send(MSG_TYPE_STATUS, json);
 			free(packet);
 			return rc;
 
@@ -380,6 +385,8 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 */
 		case COMMAND_TYPE_SUSPEND:
 
+			if(msg->length > 1) return ERR_BAD_FORMAT;
+
 			/*
 			 * Send the suspend request to the system queue
 			 */
@@ -391,7 +398,8 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 * Request a selftest of the device
 		 */
 		case COMMAND_TYPE_SELFTEST:
-			system_t::BIOS_selftest();
+
+			NOTIFY_INFO("Selftest - Not supported.");
 			free(packet);
 			return rc;
 
@@ -399,6 +407,8 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 * Request a get of data
 		 */
 		case COMMAND_TYPE_GET:
+
+			if(msg->length > 1) return ERR_BAD_FORMAT;
 			rc = send((msg_type_t)(*packet)[0], NULL);
 			free(packet);
 			return rc;
@@ -434,11 +444,13 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 void coms_svr::coms_callback(MQTT::MessageData& md){
 
 	// Index
-	uint8_t index = 0;
+	uint8_t index 	= 0;
+
+	// Return code
+	status_code_t rc;
 
 	// Token holder
-	char* token;
-	char* previous;
+	char* tokens;
 
 	// Packet
 	msg_t packet;
@@ -451,10 +463,21 @@ void coms_svr::coms_callback(MQTT::MessageData& md){
 	/*
 	 * Tokenize the string to get last object
 	 */
+	tokens = strtok(md.topicName.lenstring.data, TOPIC_DELIMITER);
 	do{
-		previous 	= token;
-		token 		= strtok(topic, "/");
-	}while(token != NULL);
+
+		previous 	= tokens;
+		tokens 		= strtok(NULL, TOPIC_DELIMITER);
+	/*
+	 * We would stop when the tokens have been valued at null.
+	 * The previous container would contain the tokens before the null value.
+	 */
+	}while(tokens);
+
+	/*
+	 * Notify the command
+	 */
+	NOTIFY_INFO("Found cmd: " + String(tokens));
 
 	/*
 	 * Compare the topic
@@ -475,7 +498,23 @@ void coms_svr::coms_callback(MQTT::MessageData& md){
 			/*
 			 * Process that type of message
 			 */
-			if(coms_t::process(commands[i].type, &packet) != STATUS_OK){
+			if((rc = coms_t::process(commands[i].type, &packet)) != STATUS_OK){
+
+				/*
+				 * Check for bad format
+				 */
+				if(rc == ERR_BAD_FORMAT){
+
+					msg_t msg;
+					msg.data 	= ARGUMENT_ERROR;
+					msg.length 	= ARGUMENT_ERROR_LEN;
+
+					/*
+					 * Send bad format packet to the mqtt broker
+					 */
+					send(MSG_TYPE_STATUS, &msg);
+					return;
+				}
 
 				/*
 				 * There has been a problem with the processing.
@@ -536,7 +575,7 @@ void callback(char* topic, byte* payload, unsigned int length){
 		 * Notify the USER
 		 */
 		digitalWrite(RECEIVE_LED, HIGH);
-		delay(1000);
+		delay(COMS_SERVICE_DELAY);
 		digitalWrite(RECEIVE_LED, LOW);
 	}
 

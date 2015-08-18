@@ -70,8 +70,13 @@ void publish::publish_task_cb(){
 			/*
 			 * Send the string the the mqtt component
 			 */
-			system_t::coms.send(cache.msg, json);
-			sleep(PUB_SLEEP); // sleep for a bit
+			system_t::coms.send(cache->msg, json);
+			delay(PUB_SLEEP); // sleep for a bit
 		}
+
+		/*
+		 * Update to the next cache
+		 */
+		cache = cache->next;
 	}while(cache);
 }

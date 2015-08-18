@@ -122,7 +122,7 @@ class wifi {
 	     *
 	     * @return int8_t	Number of discovered networks
 	     */
-	    int8_t scanNetworks();
+	    int8_t scan_networks();
 
 	    /**
 	     * @brief Gets the internal wifi interface class.

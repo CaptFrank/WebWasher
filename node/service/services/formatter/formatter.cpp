@@ -14,16 +14,16 @@
 static const string_table_t string_table[] = {
 
 		{
-				CACHE_TYPE_ACC_DATA, 	formatter::acc_json
+				CACHE_TYPE_ACC_DATA, 	formatter_t::acc_json
 		},
 		{
-				CACHE_TYPE_TEMP_DATA, 	formatter::temp_json
+				CACHE_TYPE_TEMP_DATA, 	formatter_t::temp_json
 		},
 		{
-				CACHE_TYPE_HEARTBEAT, 	formatter::heartbeat_json
+				CACHE_TYPE_HEARTBEAT, 	formatter_t::heartbeat_json
 		},
 		{
-				CACHE_TYPE_STATUS, 		formatter::status_json
+				CACHE_TYPE_STATUS, 		formatter_t::status_json
 		},
 };
 

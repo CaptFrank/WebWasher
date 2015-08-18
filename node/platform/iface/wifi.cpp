@@ -129,7 +129,7 @@ wl_status_t wifi::disconnect(){
  *
  * @return int8_t	Number of discovered networks
  */
-int8_t wifi::scanNetworks(){
+int8_t wifi::scan_networks(){
 	return wifi_if->scanNetworks();
 }
 
