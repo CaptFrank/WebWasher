@@ -31,10 +31,43 @@ Imports
 =============================================
 """
 
+from queue import Queue
+from threading import Thread
+
 from WebWasherServer.config import *
 from WebWasherServer.Storage.Redis import RedisStorage
 from WebWasherServer.Server.Server import Server
 from paho.mqtt.client import Client
+
+"""
+=============================================
+Constants
+=============================================
+"""
+
+MQTT_TYPE                       = "MQTT"
+
+# MQTT server states
+MQTT_SERVER_STATE_INIT          = 1
+MQTT_SERVER_STATE_SETUP         = 2
+MQTT_SERVER_STATE_RUN           = 3
+MQTT_SERVER_STATE_DEAD          = 4
+
+# MQTT connection states
+MQTT_SERVER_CONNECTION_ALIVE    = 1
+MQTT_SERVER_CONNECTION_DEAD     = 2
+
+# Shortcuts
+ALIVE                           = MQTT_SERVER_CONNECTION_ALIVE
+DEAD                            = MQTT_SERVER_CONNECTION_DEAD
+
+"""
+=============================================
+Global MQTT queue reference
+=============================================
+"""
+
+__queue                          = Queue()
 
 """
 =============================================
@@ -44,7 +77,8 @@ Source
 
 class MqttServer(
     Client,
-    Server
+    Server,
+    Thread
 ):
     """
     This is the base class for the MQTT client. We use this class object
@@ -55,7 +89,19 @@ class MqttServer(
     """
 
     # Connection configurations
-    _configs  = dict()
+    _configs    = dict()
+
+    # State
+    _state      = None
+
+    # Connection
+    _conn       = None
+
+    # Subscriptions
+    _subs       = []
+
+    # Thread alive
+    _alive      = True
 
     def __init__(self, name=None, config=None):
         """
@@ -88,7 +134,14 @@ class MqttServer(
 
         # Override the base classes
         Client.__init__(self, name)
-        Server.__init__(self, "MQTT", RedisStorage())
+        Server.__init__(self, MQTT_TYPE, RedisStorage())
+        Thread.__init__(self)
+
+        print("[+] Set the queue reference hook.")
+        global __queue
+        __queue = self._storage
+
+        self._set_state(MQTT_SERVER_STATE_INIT)
         print("[+] Created a new MQTTServer object.")
         return
 
@@ -100,6 +153,11 @@ class MqttServer(
         We connect to the broker and subscribe
         :return:
         """
+
+        # Check the state machine
+        if not self._check_state(
+                        MQTT_SERVER_STATE_SETUP - 1):
+            return False
 
         # Connect
         print("[+] Connecting to the broker.")
@@ -113,8 +171,23 @@ class MqttServer(
         # Subscribe
         for item in self._configs['sub']:
             self.subscribe(item)
+            self._subs.append(item)
             print("[+] Subscribing to %s." %item)
-        return
+
+        print("[+] Installing the callback hooks.")
+        self.on_connect     = self._on_connect
+        self.on_disconnect  = self._on_disconnect
+        self.on_message     = self._on_message
+        self.on_publish     = self._on_publish
+        self.on_subscribe   = self._on_subscribe
+        self.on_unsubscribe = self._on_unsubscribe
+
+        if DEBUG:
+            print("[+] Installing the log mechanism.")
+            self.on_log     = self._on_log
+
+        self._set_state(MQTT_SERVER_STATE_SETUP)
+        return True
 
     def run(self):
         """
@@ -123,9 +196,36 @@ class MqttServer(
         :return:
         """
 
+        # Check the state machine
+        if not self._check_state(
+                        MQTT_SERVER_STATE_RUN -1):
+            return False
+        elif not self._check_cxn_status():
+            return False
+
         # Start the handler thread
-        #self.loop_start()
-        return
+        self._set_state(MQTT_SERVER_STATE_RUN)
+        self.loop_start()
+
+        # Start the collector thread
+        while self._check_state(ALIVE):
+
+            """
+            We need to take the entries in the queue and
+            put them into the Redis Queue.
+            """
+
+            global __queue
+            if __queue:
+
+                # Get the data piece
+                item = __queue.get(block=True)
+                if item:
+
+                    # Put the entry in the redis Queue
+                    self._storage.append(self._type, item['message'])
+
+            return
 
     def stop(self):
         """
@@ -133,18 +233,181 @@ class MqttServer(
         :return:
         """
 
+        # Check the state machine
+        if not self._check_state(
+                        MQTT_SERVER_STATE_DEAD -1):
+            return False
+
         # Kill the thread
         self.loop_stop(force=True)
 
         # Disconnect the client
         self.disconnect()
-        return
 
+        if self._check_cxn_status():
+            return False
+
+        self._set_state(MQTT_SERVER_STATE_DEAD)
+        return True
+
+    # ==============
     # Callbacks
-    def on_connect(self):
+    # ==============
 
+    def _on_connect(self):
+        """
+        This method is called when there is a new connection
+        that is spawned.
+        """
+
+        self._set_cxn_status(ALIVE)
+        print("[+] Connection ACK received.")
         return
 
-    def on_disconnect(self):
+    def _on_disconnect(self):
+        """
+        This method is called when there is a disconnect request
+        broadcasted.
+        """
 
+        self._set_cxn_status(DEAD)
+        print("[+] Disconnection ACK received.")
         return
+
+    @staticmethod
+    def _on_message(client, userdata, message):
+        """
+        This method is invoked when there is a new message in the
+        receive buffer.
+        """
+
+        # We add the message to the message queue.
+        global __queue
+        if __queue:
+            __queue.put(
+                {
+                    "client"    : client,
+                    "data"      : userdata,
+                    "message"   : message
+                },
+                block=True
+            )
+        return
+
+    @staticmethod
+    def _on_publish(client, userdata, mid):
+        """
+        This method is invoked when there is a message publish
+        request.
+        """
+
+        print(
+            "[+] Client: %s published a message with mid: %s"
+            % (str(client), str(mid))
+        )
+        print(
+            "[+] Message: %s"
+            % str(userdata)
+        )
+        return
+
+    @staticmethod
+    def _on_subscribe(client, userdata, mid, qos):
+        """
+        This method is invoked when there is a subscribe request
+        that is broadcasted.
+        """
+
+        print(
+            "[+] Subscribed to: %s\r"
+            "With qos: %s\r"
+            "From client: %s\r"
+            "Message Id: %s"
+            % (str(userdata), str(qos), str(client), str(mid))
+        )
+        return
+
+    @staticmethod
+    def _on_unsubscribe(client, userdata, mid):
+        """
+        This is method is invoked when there is an unsubscribe
+        request that is broadcasted.
+        """
+
+        print(
+            "[+] Unsubscribed to: %s\r"
+            "From client: %s\r"
+            "Message Id: %s"
+            % (str(userdata), str(client), str(mid))
+        )
+        return
+
+    @staticmethod
+    def _on_log(client, userdata, level, buf):
+        """
+        This method is only invoked when there is debug requests and
+        when the DEBUG config is enabled.
+        """
+
+        print(
+            "[+] Debug Log from client: %s:\r"
+            "\t - data: %s\r"
+            "\t - level: %s\r"
+            "\t - buffer: %s\r"
+            % (client, userdata, level, buf)
+        )
+        return
+
+    # ==============
+    # State Machine
+    # ==============
+
+    """
+    The following Methods correspond to the internal state property
+    of the class. We use these properties as a control to the MQTT server.
+    It serves as a blocking mechanism when there is a set process required before
+    another.
+    """
+
+    def _set_state(self, state):
+        self._state = state
+        return
+
+    def _get_state(self):
+        return self._state
+
+    def _check_state(self, check):
+        if self._get_state() == check:
+            return True
+        else:
+            return False
+
+    # The private access property
+    __state = property(_get_state, _set_state)
+
+    # ==============
+    # Connection
+    # ==============
+
+    """
+    The following Methods correspond to the internal connection state property
+    of the class. We use these properties as a control to the MQTT server.
+    It serves as a blocking mechanism when there is a set process required before
+    another.
+    """
+
+    def _set_cxn_status(self, state):
+        self._state = state
+        return
+
+    def _get_cxn_status(self):
+        return self._state
+
+    def _check_cxn_status(self):
+        if self._get_state() == MQTT_SERVER_CONNECTION_ALIVE:
+            return True
+        else:
+            return False
+
+    # The private access property
+    __cxn = property(_get_cxn_status, _set_cxn_status)
