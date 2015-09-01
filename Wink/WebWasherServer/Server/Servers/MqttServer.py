@@ -286,9 +286,12 @@ class MqttServer(
         if __queue:
             __queue.put(
                 {
-                    "client"    : client,
-                    "data"      : userdata,
-                    "message"   : message
+                    "type"      : MQTT_TYPE,
+                    "data"      : {
+                        "client"    : client,
+                        "data"      : userdata,
+                        "message"   : message
+                    }
                 },
                 block=True
             )
