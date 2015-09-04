@@ -24,7 +24,6 @@ Imports
 
 import zmq
 from ..config import *
-
 from threading import Thread
 
 """
@@ -75,6 +74,7 @@ class Publisher(Thread):
         )
 
         # We create a socket to connect to
+        #TODO
         self.__socket = self.__context.socket(zmq.SUB)
 
         # Override the thread class
@@ -92,6 +92,6 @@ class Publisher(Thread):
         if not self.__socket:
             return False
 
-        return True
+        # We setup the queues
 
-    def
+        return True
