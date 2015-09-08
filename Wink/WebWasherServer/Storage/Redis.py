@@ -19,10 +19,12 @@ Imports
 =============================================
 """
 
+import os
 import uuid
-from redis import Redis
 from rq import Queue
-from ..Base.Singleton import Singleton
+from redis import Redis
+
+from Base.Singleton import Singleton
 
 """
 =============================================
@@ -32,7 +34,7 @@ Source
 
 class RedisStorage(Singleton):
     """
-    This is the wrapper class objec that wraps the
+    This is the wrapper class object that wraps the
     base redis interface to a more comprehensive interface.
     This is also a Singleton design pattern.
     """
@@ -44,6 +46,9 @@ class RedisStorage(Singleton):
     _count      = 0
 
     def __init__(self):
+
+        # Init the Redis
+        os.system("redis-server &")
 
         # Connect to the server
         self._redis = Queue(connection=Redis())
