@@ -89,19 +89,23 @@ class Publisher(Thread):
         if not self.__sockets:
             return False
 
+        # We only need one publisher to publish to the mqtt
+        # broker.
+        pub = self.__context.socket(zmq.PUB)
+
+        # Bind to the address
+        pub.connect(
+            "{protocol}{address}:{port}".format(
+                **self.__configs
+            )
+        )
+
         # If the sockets are good we can create
         # threads in a dict of threads
         for item in self.__queues:
 
-            # We create a pub socket
-            item['pub'] = self.__context.socket(zmq.PUB)
-
-            # Bind to the address
-            item['pub'].connect(
-                "{protocol}{address}:{port}".format(
-                    **self.__configs
-                )
-            )
+            # Assign the new publisher isntance
+            item['pub'] = pub
             print(
                 '[+] Connected {name} queue: {protocol}{address}:{port}'.format(
                     name=item['name'],
@@ -175,3 +179,10 @@ class Publisher(Thread):
         """
 
         # We spawn the threads and set the queues
+        # We spawn the workers that will process the requests
+        #   - CLI
+        #   - SYS
+        #   - APP
+
+        # Once the request is processed, we send the request
+        # To the apropriate topic.

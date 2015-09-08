@@ -59,7 +59,7 @@ class TCPSocketServerHandler(
     _sensors        = dict()
 
     # The request queues
-    _queue          = RedisStorage()
+    queue          = None
 
     # Handler type
     _type           = "RAW"
@@ -76,7 +76,7 @@ class TCPSocketServerHandler(
         request = self.request.recv(1024)
 
         # Add the request to the queue
-        self._queue.append(self._type, request)
+        self.queue.append(self._type, request)
         print("[+] Adding an entry in the db: {%s : %s}"
               % (self._type, request))
 
@@ -102,17 +102,20 @@ class TCPSocketServer(
     # Much faster rebind
     allow_reuse_address     = True
 
-    def __init__(self, server_address, cls):
+    def __init__(self, server_address, storage):
         """
         This is the default constrcutor for the socket server
         class object.
 
         :param server_address:      The server address
-        :param cls:                 The handler class
+        :param storage:             The storage singleton reference
         :return:
         """
 
         # Override the class
-        socketserver.ThreadingTCPServer.__init__(self, server_address, cls)
+        socketserver.ThreadingTCPServer.__init__(self, server_address, TCPSocketServerHandler)
         print("[+} Created a new TCPSocketServer class.")
+
+        # Setting the storage attribute in the handler
+        self.RequestHandlerClass.queue = storage
         return

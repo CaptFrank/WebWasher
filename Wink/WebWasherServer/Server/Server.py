@@ -33,7 +33,7 @@ class Server:
     """
 
     # The Queue
-    _queue              = None
+    queue              = None
 
     # The server type
     _type               = ""
@@ -52,6 +52,6 @@ class Server:
         """
 
         # Assign the attributes locally
-        self._queue = storage
+        self.queue = storage
         self._type = type
         return
