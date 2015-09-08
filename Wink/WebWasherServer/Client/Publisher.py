@@ -175,4 +175,3 @@ class Publisher(Thread):
         """
 
         # We spawn the threads and set the queues
-
