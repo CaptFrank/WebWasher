@@ -39,6 +39,10 @@ QUEUE_TYPE_PUB              = 1
 QUEUE_TYPE_SUB              = 2
 QUEUE_TYPE_PUBSUB           = QUEUE_TYPE_PUB + QUEUE_TYPE_SUB
 
+# Manager Configurations
+MANAGER_ADDRESS             = ('localhost', 9999)
+MANAGER_PASSWORD            = "Garf12345!"
+
 # The command server attributes
 COMMAND_SERVER_ADDRESS      = 'broker.haligonia.home.com'
 COMMAND_SERVER_PORT         = 5555

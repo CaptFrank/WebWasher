@@ -21,6 +21,7 @@ Constants
 =============================================
 """
 
+from queue import Queue
 
 """
 =============================================
@@ -28,7 +29,7 @@ Source
 =============================================
 """
 
-class CommandQueue:
+class Buffer(Queue):
     """
     This is the command queue class object that contains the
     methods needed to queue up commands for system, command
@@ -38,20 +39,27 @@ class CommandQueue:
     # Queue Type
     __type              = None
 
-    # Queue Size
-    __size              = None
+    # Queue name
+    __name              = None
 
-    # Queue Fetch Timeout
-    __timeout           = None
-
-    def __init__(self):
+    def __init__(self, name, type):
         """
         This is the default constructor for the class.
+
+        :param name:        The name of the queue
+        :param type:        The type of the queue
         :return:
         """
+
+        # Override the base class
+        Queue.__init__(self)
+
+        # Set internals
+        self.__name = name
+        self.__type = type
         return
 
-    def set(self, *args):
+    def set(self, kwargs):
         """
         Sets the queues attributes.
 
@@ -59,4 +67,13 @@ class CommandQueue:
         :return:
         """
 
+        self.put(kwargs, block=True)
         return
+
+    def retrieve(self):
+        """
+        Get the queue value
+
+        :return:            The param popped off.
+        """
+        return self.get()

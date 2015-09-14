@@ -72,6 +72,8 @@ class Push(Thread):
         :return:
         """
 
+
+
         # While the thread is alive
         while self.__alive:
 
