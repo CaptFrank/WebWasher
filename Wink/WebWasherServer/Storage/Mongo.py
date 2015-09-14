@@ -3,7 +3,7 @@
     :Redis:
     ==========
 
-    :This is the wrapper to the base redis library.:
+    :This is the wrapper to the base mongodb library.:
 
     :copyright: (c) 8/26/2015 by fpapinea.
     :license: BSD, see LICENSE for more details.
@@ -21,10 +21,9 @@ Imports
 
 import os
 import uuid
-from rq import Queue
-from redis import Redis
+from pymongo import MongoClient
 
-from Base.Singleton import Singleton
+from .Base.Singleton import Singleton
 
 """
 =============================================
@@ -32,15 +31,15 @@ Source
 =============================================
 """
 
-class RedisStorage(Singleton):
+class MongoStorage(Singleton):
     """
     This is the wrapper class object that wraps the
-    base redis interface to a more comprehensive interface.
+    base mongo interface to a more comprehensive interface.
     This is also a Singleton design pattern.
     """
 
     # The connection
-    _redis      = None
+    _mongo      = None
 
     # The count
     _count      = 0
@@ -48,10 +47,10 @@ class RedisStorage(Singleton):
     def __init__(self):
 
         # Init the Redis
-        os.system("redis-server &")
+        os.system("mongod &")
 
         # Connect to the server
-        self._redis = Queue(connection=Redis())
+        self._mongo = MongoClient()
 
         # Override the singleton base class
         Singleton.__init__(self)
@@ -70,11 +69,15 @@ class RedisStorage(Singleton):
         tag = ":" + str(uuid.uuid4())
 
         # Add it
-        self._redis.enqueue(type + tag, request)
+        self._mongo[type].insert_one(
+            {
+                'tag'       :   tag,
+                'request'   :  request
+            }
+        )
 
         # Get the new count to validate
-        self._count = self._redis.count
-        return self._count
+        return self._mongo[type].count()
 
     def consume(self):
         """
