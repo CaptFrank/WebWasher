@@ -17,8 +17,7 @@
 /*
  * Peripherals
  */
-#include <platform/platform.h>
-#include <service/services.h>
+#include <service/services/coms/coms.h>
 
 /*
  * Local task defines
@@ -37,7 +36,7 @@
  * the internal caches, formatting them into JSON reponses and
  * publishing them to the mqtt broker.
  */
-class publish : protected task_t {
+class publish : public task_t {
 
 	/*
 	 * Public access methods

@@ -177,7 +177,7 @@ void task::set_interval(uint32_t interval){
 	 * Set the interval
 	 */
 	_interval = interval;
-	delay();
+	delay(DEFAULT_DELAY);
 }
 
 

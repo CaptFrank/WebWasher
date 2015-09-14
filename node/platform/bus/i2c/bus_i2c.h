@@ -45,7 +45,7 @@ typedef struct {
  *
  * 	@extends bus_t
  */
-class bus_i2c: public bus_t {
+class bus_i2c: public bus {
 
 	/**
 	 * Private class attributes
@@ -64,6 +64,15 @@ class bus_i2c: public bus_t {
 		 */
 		bus_i2c();
 
+		/**
+		 * @brief Public accessor for the bus status
+		 *
+		 * Accesses the bus status
+		 */
+		bus_status_t get_status(){
+			return status;
+		}
+
 		/*!
 		 * \brief Read multiple Bytes from a bus interface.
 		 *
@@ -74,7 +83,7 @@ class bus_i2c: public bus_t {
 		 *         requested number of Bytes in the event of an error.
 		 */
 		size_t read(uint8_t addr, i2c_bus_packet_t* packet);
-		size_t read(uint8_t addr, uint8_t size, uint8_t index, uint8_t* data);
+		size_t read(int addr, unsigned int  size, uint8_t index, uint8_t* data);
 
 		/*!
 		 * \brief Write multiple Bytes to a bus interface.
@@ -86,7 +95,7 @@ class bus_i2c: public bus_t {
 		 *         requested number of Bytes in the event of an error.
 		 */
 		size_t write(uint8_t addr, i2c_bus_packet_t* packet);
-		size_t write(uint8_t addr, uint8_t size, uint8_t index, uint8_t* data);
+		size_t write(int addr, unsigned int size, uint8_t index, uint8_t* data);
 
 		/*!
 		 * \brief Read a single Byte from a bus interface.

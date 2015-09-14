@@ -5,7 +5,7 @@
  *      Author: francis-ccs
  */
 
-#include <services/data/daq.h>
+#include <task/tasks/daq.h>
 
 /**
  * @brief The default constructor
@@ -15,7 +15,7 @@
  *
  * @param sensors		The sensor interfaces
  */
-daq::daq(sensor_t* sensors) : \
+daq::daq(sensor_t* sensors[]) : \
 	task_t(interval, iterations, daq_task_cb, DAQ_THREAD_ID){
 
 	/*
@@ -51,7 +51,7 @@ void daq::daq_task_cb(){
 	 * with the most pertinent data.
 	 */
 	do{
-		sensor = daq_t::sensors[index];
+		sensor = (sensor_t*)&daq_t::sensors[index];
 		if(sensor){ // Valid check of the sensor
 			if(sensor->update()){
 				index ++;

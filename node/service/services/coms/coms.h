@@ -8,9 +8,12 @@
 #ifndef SERVICE_SERVICES_COMS_H_
 #define SERVICE_SERVICES_COMS_H_
 
-#include <string>
+#include <string.h>
 #include <configs.h>
 #include <status_codes.h>
+#include <Countdown.h>
+#include <MQTTClient.h>
+
 #include <platform/platform.h>
 
 /*
@@ -22,23 +25,6 @@
 
 #define ARGUMENT_ERROR				("ARGUMENT ERROR")
 #define ARGUMENT_ERROR_LEN			(strlen(ARGUMENT_ERROR))
-
-/*
- * Local Typedefs
- */
-typedef uint16_t msg_length_t;
-typedef void* msg_data_t;
-
-/**
- * @brief The message types allowed
- */
-typedef enum {
-	MSG_TYPE_HEARTBEAT,		//!< MSG_TYPE_HEARTBEAT
-	MSG_TYPE_STATUS,   		//!< MSG_TYPE_STATUS
-	MSG_TYPE_TEMP_DATA,		//!< MSG_TYPE_TEMP_DATA
-	MSG_TYPE_ACC_DATA, 		//!< MSG_TYPE_ACC_DATA
-	MSG_TYPE_OTHER			//!< MSG_TYPE_OTHER
-}msg_type_t;
 
 /**
  * @brief The remote commands allowed
@@ -57,14 +43,6 @@ typedef enum {
 	COMMAND_TYPE_MAX_SIZE   //!< COMMAND_TYPE_MAX_SIZE
 }command_t;
 
-/**
- * @brief The message type definition
- */
-typedef struct {
-
-	msg_length_t 	length;	// The message length
-	msg_data_t		data;	// The message data
-}msg_t;
 
 /**
  * @brief The command map definiton

@@ -12,9 +12,9 @@
 /**
  * @brief Include the services
  */
-#include "services/coms/coms.h"
 #include "services/system/system.h"
 #include "services/formatter/formatter.h"
+#include "services/coms/coms.h"
 
 
 #endif /* SERVICE_SERVICES_SERVICES_H_ */

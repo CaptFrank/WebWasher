@@ -10,4 +10,5 @@
 	<createSlaveProjects value=""/>
 	<ignoreDefaultDeviceSettings value="true"/>
 	<energia.primaryFile value="node.ino"/>
+	<isTargetManual value="false"/>
 </projectOptions>

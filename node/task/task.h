@@ -8,7 +8,8 @@
 #ifndef TASK_TASK_H_
 #define TASK_TASK_H_
 
-#include "scheduler.h"
+#include "Energia.h"
+#include <configs.h>
 
 /**
  * @brief callback definition
@@ -30,11 +31,6 @@ typedef uint8_t thread_id_t;
 class task {
 
 	/*
-	 * Friend class
-	 */
-	friend class scheduler_t;
-
-	/*
 	 * Public access attributes
 	 */
 	public:
@@ -42,13 +38,13 @@ class task {
 		/*
 		 * Task list pointers
 		 */
-		task_t* 				prev;
-		task_t* 				next;
+		task* 					prev;
+		task* 					next;
 
 		/*
 		 * Scheduler
 		 */
-		scheduler_t* 			scheduler;
+		void* 					scheduler;
 
 		/*
 		 * Private attributes

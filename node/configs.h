@@ -8,19 +8,60 @@
 #ifndef CONFIGS_H_
 #define CONFIGS_H_
 
+#include "Energia.h"
+
+/**
+ * Cache types
+ */
+typedef enum {
+
+	CACHE_TYPE_HEARTBEAT	= 0x0600,	//!< CACHE_TYPE_HEARTBEAT
+	CACHE_TYPE_STATUS		= 0x0400,	//!< CACHE_TYPE_STATUS
+	CACHE_TYPE_TEMP_DATA	= 0x0200,	//!< CACHE_TYPE_TEMP_DATA
+	CACHE_TYPE_ACC_DATA  	= 0x0001,	//!< CACHE_TYPE_ACC_DATA
+	CACHE_TYPE_ALL			= 0x0000,	//!< CACHE_TYPE_ALL
+}cache_t;
+
+/**
+ * @brief The message types allowed
+ */
+typedef enum {
+	MSG_TYPE_HEARTBEAT,		//!< MSG_TYPE_HEARTBEAT
+	MSG_TYPE_STATUS,   		//!< MSG_TYPE_STATUS
+	MSG_TYPE_TEMP_DATA,		//!< MSG_TYPE_TEMP_DATA
+	MSG_TYPE_ACC_DATA, 		//!< MSG_TYPE_ACC_DATA
+	MSG_TYPE_OTHER			//!< MSG_TYPE_OTHER
+}msg_type_t;
+
+/*
+ * Local Typedefs
+ */
+typedef uint16_t msg_length_t;
+typedef void* msg_data_t;
+
+
+/**
+ * @brief The message type definition
+ */
+typedef struct {
+
+	msg_length_t 	length;	// The message length
+	msg_data_t		data;	// The message data
+}msg_t;
+
+
 /**
  * @brief Easier Macros to use
  */
 #define PRINT					Serial.print
 #define PRINTLN					Serial.println
 
-#define NOTIFY					Serial.println
-#define ERROR					("<[ERROR]:")
-#define INFO					("<[INFO]:")
+#define ERROR					String("<[ERROR]:")
+#define INFO					String("<[INFO]:")
 
 
-#define NOTFIY_ERROR			(var) 		NOTIFY(ERROR 	+ var)
-#define NOTIFY_INFO				(var) 		NOTIFY(INFO 	+ var)
+#define NOTIFY_ERROR(var) 		Serial.println(ERROR 	+ String(var))
+#define NOTIFY_INFO(var) 		Serial.println(INFO 	+ String(var))
 
 #define HEARTBEAT_LED			RED_LED
 #define RECEIVE_LED				YELLOW_LED
@@ -28,6 +69,9 @@
 
 #define DEVICE_VERSION			0x01
 #define DEVICE_ID				0x01
+
+#define NUMBER_OF_SENSORS		2
+#define DEFAULT_DELAY			100 // 100ms
 
 /*
  * Tasks to be enabled
@@ -118,7 +162,7 @@
  * @brief MQTT Attributes
  */
 #define MQTT_VERSION				(3)
-#define MQTT_SENSOR_ID				("SENSOR_1")
+#define MQTT_SENSOR_ID				(1)
 #define MQTT_USERNAME				("use-token-auth")
 #define MQTT_PASSWORD				("haligonia")
 #define MQTT_KEEP_ALIVE				(10)

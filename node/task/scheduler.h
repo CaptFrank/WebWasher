@@ -12,6 +12,8 @@
  * Include the task definition
  */
 #include "task.h"
+#include <status_codes.h>
+#include <service/services.h>
 
 /**
  * @brief The scheduler interface
@@ -26,6 +28,11 @@ class scheduler {
 	 * Private access methods
 	 */
 	private:
+
+		/*
+		 * Friend class
+		 */
+		friend task;
 
 		/*
 		 * Tasks pointers

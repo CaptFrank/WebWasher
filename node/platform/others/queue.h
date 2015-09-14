@@ -100,10 +100,6 @@ class queue {
     link tail;       // the tail of the list.
 };
 
-/*
- * Typedef
- */
-typedef queue queue_t;
 
 // init the queue (constructor).
 template<typename T>

@@ -5,7 +5,7 @@
  *      Author: fpapinea
  */
 
-#include <service/services/coms.h>
+#include <service/services/coms/coms.h>
 
 /**
  * This is the command map that will generate the command type.
@@ -40,10 +40,10 @@ coms_svr::coms_svr(){
 	 */
 	wifi_attr.handle 	= new WiFiClass();
 
-	wifi_attr.ip 		= WIFI_LOCAL_IP;
-	wifi_attr.dns 		= WIFI_LOCAL_DNS;
-	wifi_attr.gateway 	= WIFI_LOCAL_GATEWAY;
-	wifi_attr.subnet 	= WIFI_LOCAL_SUBNET;
+	wifi_attr.ip = new IPAddress((uint8_t*)&WIFI_LOCAL_IP);
+	wifi_attr.dns = new IPAddress((uint8_t*)&WIFI_LOCAL_DNS);
+	wifi_attr.gateway = new IPAddress((uint8_t*)&WIFI_LOCAL_GATEWAY);
+	&wifi_attr.subnet = new IPAddress((uint8_t*)&WIFI_LOCAL_SUBNET);
 
 	/*
 	 * Create the ip stack handle
@@ -274,7 +274,7 @@ mqtt_status_t coms_svr::send(msg_type_t msg_type, msg_t* msg){
 			/*
 			 * Send the string
 			 */
-			return mqtt_if->publish(MQTT_PUBLISH_DATA_ACC, &packet);
+			return mqtt_if->publish((mqtt_topic_t)MQTT_PUBLISH_DATA_ACC, &packet);
 
 		/*
 		 * We send out the temperature data
@@ -284,7 +284,7 @@ mqtt_status_t coms_svr::send(msg_type_t msg_type, msg_t* msg){
 			/*
 			 * Send the string
 			 */
-			return mqtt_if->publish(MQTT_PUBLISH_DATA_TEMP, &packet);
+			return mqtt_if->publish((mqtt_topic_t)MQTT_PUBLISH_DATA_TEMP, &packet);
 
 		/*
 		 * We send out the status
@@ -294,7 +294,7 @@ mqtt_status_t coms_svr::send(msg_type_t msg_type, msg_t* msg){
 			/*
 			 * Send the string
 			 */
-			return mqtt_if->publish(MQTT_PUBLISH_STATUS, &packet);
+			return mqtt_if->publish((mqtt_topic_t)MQTT_PUBLISH_STATUS, &packet);
 
 		/*
 		 * Mostly used for echoe
@@ -311,7 +311,7 @@ mqtt_status_t coms_svr::send(msg_type_t msg_type, msg_t* msg){
 			 * Sending the hearbeat is through a different
 			 * socket than the mqtt service socket
 			 */
-			return ip_stack->write(msg->data, msg->length, WIFI_DEFAULT_TIMEOUT);
+			return (mqtt_status_t)ip_stack->write((uint8_t*)msg->data, msg->length, WIFI_DEFAULT_TIMEOUT);
 			break;
 	}
 }
@@ -335,7 +335,7 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 	/*
 	 * Get the message
 	 */
-	uint8_t* packet = malloc(msg->length);
+	uint8_t* packet = (uint8_t*)malloc(msg->length);
 	memcpy(packet, msg->data, msg->length);
 
 	/*
@@ -347,89 +347,104 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		 * Disconnect interfaces
 		 */
 		case COMMAND_TYPE_DISCONNECT:
+		{
 			if(msg->length > 1) return ERR_BAD_FORMAT;
 			rc = disconnect((interface_t)*packet);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Reboot a selected service/driver
 		 */
 		case COMMAND_TYPE_REBOOT:
+		{
 			if(msg->length > 1) return ERR_BAD_FORMAT;
 			system_t::BIOS_reboot((bios_reboot_t)*packet);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Request a status update
 		 */
 		case COMMAND_TYPE_STATUS:
-
+		{
 			// Format the message
-			msg_t* json = system_t::format.format(MSG_TYPE_STATUS);
-			rc = send(MSG_TYPE_STATUS, json);
+
+			msg_t* json = formatter_t::format(CACHE_TYPE_STATUS);
+			rc = (status_code_t)send(MSG_TYPE_STATUS, json);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Restart the OS
 		 */
 		case COMMAND_TYPE_RESTART:
+		{
 			system_t::BIOS_reboot(BIOS_REBOOT_OS);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Suspend the specified task/OS
 		 */
 		case COMMAND_TYPE_SUSPEND:
-
+		{
 			if(msg->length > 1) return ERR_BAD_FORMAT;
 
 			/*
 			 * Send the suspend request to the system queue
 			 */
-			system_t::BIOS_suspend((thread_id_t)*id);
+			system_t::BIOS_suspend((thread_id_t)*packet);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Request a selftest of the device
 		 */
 		case COMMAND_TYPE_SELFTEST:
-
+		{
 			NOTIFY_INFO("Selftest - Not supported.");
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Request a get of data
 		 */
 		case COMMAND_TYPE_GET:
-
+		{
 			if(msg->length > 1) return ERR_BAD_FORMAT;
-			rc = send((msg_type_t)(*packet)[0], NULL);
+			rc = (status_code_t)send((msg_type_t)(*packet), NULL);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * Echo out the data sent to the device
 		 */
 		case COMMAND_TYPE_ECHO:
-			rc = send(MSG_TYPE_OTHER, packet);
+		{
+			rc = (status_code_t)send(MSG_TYPE_OTHER, (msg_t*)packet);
 			free(packet);
-			return rc;
+			break;
+		};
 
 		/*
 		 * No request sent with substance, we sned a heartbeat.
 		 */
 		default:
-			rc = send(MSG_TYPE_HEARTBEAT, NULL);
+		{
+			rc = (status_code_t)send(MSG_TYPE_HEARTBEAT, NULL);
 			free(packet);
-			return rc;
-
+			break;
+		};
 	}
+	return rc;
 }
 
 /**
@@ -443,14 +458,12 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
  */
 void coms_svr::coms_callback(MQTT::MessageData& md){
 
-	// Index
-	uint8_t index 	= 0;
-
 	// Return code
 	status_code_t rc;
 
 	// Token holder
 	char* tokens;
+	char* previous;
 
 	// Packet
 	msg_t packet;
@@ -492,13 +505,17 @@ void coms_svr::coms_callback(MQTT::MessageData& md){
 			/*
 			 * Create a message object
 			 */
-			packet.data 	= (void*)payload;
-			packet.length 	= length;
+			packet.data 	= (void*)md.message.payload;
+			packet.length 	= md.message.payloadlen;
 
 			/*
 			 * Process that type of message
 			 */
-			if((rc = coms_t::process(commands[i].type, &packet)) != STATUS_OK){
+			// Get coms reference
+			coms_svr* com = system_t::coms;
+
+			// Process the command
+			if((rc = com->process(commands[i].type, &packet)) != STATUS_OK){
 
 				/*
 				 * Check for bad format
@@ -506,13 +523,13 @@ void coms_svr::coms_callback(MQTT::MessageData& md){
 				if(rc == ERR_BAD_FORMAT){
 
 					msg_t msg;
-					msg.data 	= ARGUMENT_ERROR;
+					memcpy(msg.data, ARGUMENT_ERROR, ARGUMENT_ERROR_LEN);
 					msg.length 	= ARGUMENT_ERROR_LEN;
 
 					/*
 					 * Send bad format packet to the mqtt broker
 					 */
-					send(MSG_TYPE_STATUS, &msg);
+					com->send(MSG_TYPE_STATUS, &msg);
 					return;
 				}
 
@@ -548,7 +565,6 @@ void callback(char* topic, byte* payload, unsigned int length){
 	 * Message temp container
 	 */
 	char* msg 			= 0;
-	uint16_t counter	= 0;
 
 	/*
 	 * Create the message container
@@ -558,7 +574,7 @@ void callback(char* topic, byte* payload, unsigned int length){
 	/*
 	 * Copy the message to the container
 	 */
-	for(count = 0; count < length; count++) {
+	for(unsigned int count = 0; count < length; count++) {
 
 		/*
 		 * Copy the data over

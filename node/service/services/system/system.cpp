@@ -5,8 +5,7 @@
  *      Author: francis-ccs
  */
 
-#include <prcm.c>
-#include <services/system/system.h>
+#include <service/services/system/system.h>
 
 /**
  * @brief The default constructor for the class.
@@ -18,13 +17,13 @@
  *
  * @param sensors	 	The sensors taht are in use
  */
-void system_srv::BIOS_setup(sensor_t* sensors){
+void system_srv::BIOS_setup(sensor_t* sensors[]){
 
 	/*
 	 * Create the inclass queue on the heap
 	 */
 	system_t::suspend_queue = \
-			new queue_t<thread_id_t>();
+			new queue<thread_id_t>();
 
 	/*
 	 * Setup the heartbeat cache
@@ -49,7 +48,7 @@ void system_srv::BIOS_setup(sensor_t* sensors){
 	/*
 	 * Create the list
 	 */
-	system_t::list = &system_t::heartbeat_cache;
+	list = &heartbeat_cache;
 
 	/*
 	 * Create the formatter
@@ -60,12 +59,14 @@ void system_srv::BIOS_setup(sensor_t* sensors){
 	 * Create the coms
 	 */
 	system_t::coms = new coms_t();
-	system_t::coms.connect(INTERFACE_BOTH);
+	system_t::coms->connect(INTERFACE_BOTH);
 
 	/*
 	 * Add the sensors
 	 */
-	system_t::sensors = sensors;
+
+	// copy over the sensor pointers.
+	memcpy((void*)system_t::sensors, (void*)sensors, NUMBER_OF_SENSORS);
 	NOTIFY_INFO("System BIOS Booted.");
 	digitalWrite(STATUS_LED, HIGH);
 }
@@ -94,14 +95,14 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 		/*
 		 * Delete the current coms and re init it.
 		 */
-		system_t::coms.disconnect(INTERFACE_BOTH);
+		system_t::coms->disconnect(INTERFACE_BOTH);
 		delete system_t::coms;
 
 		/*
 		 * Reconnect
 		 */
 		system_t::coms = new coms_t();
-		system_t::coms.connect(INTERFACE_BOTH);
+		system_t::coms->connect(INTERFACE_BOTH);
 		break;
 
 	case BIOS_REBOOT_MQTT:
@@ -109,15 +110,15 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 		/*
 		 * Reboot the mqtt interface
 		 */
-		system_t::coms.mqtt_if->disconnect();
-		delete system_t::coms.mqtt_if;
+		system_t::coms->mqtt_if->disconnect();
+		delete system_t::coms->mqtt_if;
 
 		/*
 		 * Rebuild the interface
 		 */
-		system_t::coms.mqtt_if = \
-				new mqtt_t(system_t::coms.ip_stack);
-		system_t::coms.connect(INTERFACE_MQTT);
+		system_t::coms->mqtt_if = \
+				new mqtt_t(system_t::coms->ip_stack);
+		system_t::coms->connect(INTERFACE_MQTT);
 		break;
 
 	case BIOS_REBOOT_WIFI:
@@ -125,16 +126,16 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 		/*
 		 * Reboot the wifi engine
 		 */
-		system_t::coms.wifi_if->disconnect();
-		delete system_t::coms.wifi_if;
+		system_t::coms->wifi_if->disconnect();
+		delete system_t::coms->wifi_if;
 
 		/*
 		 * Rebuild the interface
 		 */
-		system_t::coms.wifi_if = 					\
-				new wifi_t(system_t::coms.ip_stack, \
-							system_t::coms.wifi_attr);
-		system_t::coms.wifi_if->connect(WIFI_SSID, WIFI_PASS);
+		system_t::coms->wifi_if = 					\
+				new wifi_t(system_t::coms->ip_stack, \
+						   &system_t::coms->wifi_attr);
+		system_t::coms->wifi_if->connect(WIFI_SSID, WIFI_PASS);
 		break;
 
 	case BIOS_REBOOT_OS:
@@ -147,6 +148,7 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 
 	case BIOS_REBOOT_SYS_HARD:
 	case BIOS_REBOOT_SYS_SOFT:
+
 		// Use the reset vector
 		PRCMMCUReset(true);
 		break;
@@ -239,9 +241,8 @@ void system_srv::BIOS_alert(bios_alerts_t alert){
 void system_srv::BIOS_register(sensor_t* sensor){
 
 	// Containers
-	bool 			duplicate 		= false;
 	cache_list_t* 	temp 			= system_t::list;
-	cache_list_t 	entry 			= (cache_list_t)malloc(sizeof(cache_list_t));
+	cache_list_t* 	entry 			= (cache_list_t*)malloc(sizeof(cache_list_t));
 
 	/*
 	 * Go to the end of the list and check to see if there
@@ -265,16 +266,18 @@ void system_srv::BIOS_register(sensor_t* sensor){
 		temp = temp->next;
 	}
 
+	// Get function pointer
+	sensor_cache_cb_t cb =
 	/*
 	 * Add the cache to the list
 	 */
-	entry.node = sensor->cache;
-	entry.msg  = sensor->msg;
-	entry.next = NULL;
-	entry.fxn  = sensor->update();
-	entry.prev = temp;
-	entry.type = sensor->type;
-	temp->next = &entry;
+	entry->node = sensor->cache;
+	entry->msg  = sensor->msg;
+	entry->next = NULL;
+	entry->fxn  = cb;
+	entry->prev = temp;
+	entry->type = (cache_t)sensor->cache_type;
+	temp->next = entry;
 }
 
 /**
@@ -342,15 +345,15 @@ void system_srv::BIOS_update(cache_t type = CACHE_TYPE_ALL){
  *
  * @param tasks			The tasks to boot and add to the execution pool.
  */
-void system_srv::BIOS_boot(task_t* tasks){
+void system_srv::BIOS_boot(task_t* tasks[]){
 
 	/*
 	 * Loop the task pointers and add them to our scheduler
 	 */
 	for(uint8_t i = 0; i < TASK_NUMBER; i ++){
 
-		NOTIFY_INFO("Adding task: " String(tasks[i]._id));
-		system_t::scheduler.add_task(tasks[i]);
+		NOTIFY_INFO("Adding task: " + String(tasks[i]->_id));
+		system_t::scheduler->add_task(tasks[i]);
 	}
 }
 
@@ -363,7 +366,7 @@ void system_srv::BIOS_run(){
 	 * We run the scheduled tasks
 	 */
 	NOTIFY_INFO("Running the scheduler.");
-	system_t::scheduler.run();
+	system_t::scheduler->run();
 }
 
 /**
@@ -407,7 +410,7 @@ cache_list_t* system_srv::BIOS_cache(cache_t type){
 
 			// Find the cache
 			while(temp){
-				if(type = temp->type){
+				if(type == temp->type){
 
 					NOTIFY_INFO("Cache type found: " \
 							+ String(type));
@@ -418,7 +421,7 @@ cache_list_t* system_srv::BIOS_cache(cache_t type){
 
 		case CACHE_TYPE_ALL:
 		default:
-			NOTFIY_ERROR("Invalid cache index: " \
+			NOTIFY_ERROR("Invalid cache index: " \
 					+ String(type));
 			return NULL;
 	}
@@ -435,7 +438,7 @@ void system_srv::BIOS_state(sys_state_t state){
 	/*
 	 * Set the state
 	 */
-	this->state = state;
+	system_t::state = state;
 }
 
 /*
@@ -445,7 +448,7 @@ void system_srv::BIOS_state(sys_state_t state){
 /**
  * @brief Updates the heartbeat cache
  */
-void system_srv::update_heartbeat_cache(){
+bool system_srv::update_heartbeat_cache(){
 
 	/*
 	 * Update the heartbeat
@@ -458,13 +461,13 @@ void system_srv::update_heartbeat_cache(){
 	}
 
 	system_t::heart.heartbeat_data.state = state;
-	return;
+	return true;
 }
 
 /**
  * @brief Updates the status cache
  */
-void system_srv::update_status_cache(){
+bool system_srv::update_status_cache(){
 
 	/*
 	 * Update the device states
@@ -483,7 +486,9 @@ void system_srv::update_status_cache(){
 	 * Update the iface status
 	 */
 	system_t::status.coms_data.ip_data.status = \
-			system_t::coms.wifi_if->get_status();
+			system_t::coms->wifi_if->get_status();
 	system_t::status.coms_data.mqtt_data.status = \
-			system_t::coms.mqtt_if->get_status();
+			system_t::coms->mqtt_if->get_status();
+
+	return true;
 }

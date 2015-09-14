@@ -9,7 +9,7 @@
 #define SERVICES_COMMS_MQTT_H_
 
 #include <configs.h>
-#include <service.h>
+#include <service/services.h>
 #include <status_codes.h>
 
 #include <Countdown.h>
@@ -26,21 +26,6 @@
 typedef int 	mqtt_port_t;
 typedef char*	mqtt_broker_t;
 typedef char* 	mqtt_topic_t;
-
-/**
- * @brief The MQTT connection status
- */
-typedef enum {
-	MQTT_BUFFER_OVERFLOW 	= -2,	//!< MQTT_BUFFER_OVERFLOW
-	MQTT_FAILURE_STATUS 	= -1,	//!< MQTT_FAILURE_STATUS
-	MQTT_IDLE_STATUS 		= 0,	//!< MQTT_IDLE_STATUS
-	MQTT_SUCCESS_STATUS 	= 0,	//!< MQTT_SUCCESS_STATUS
-	MQTT_CONNECTED,      			//!< MQTT_CONNECTED
-	MQTT_CONNECT_FAILED, 			//!< MQTT_CONNECT_FAILED
-	MQTT_CONNECTION_LOST,			//!< MQTT_CONNECTION_LOST
-	MQTT_DISCONNECT_FAILED,			//!< MQTT_DISCONNECT_FAILED
-	MQTT_DISCONNECTED,   			//!< MQTT_DISCONNECTED
-} mqtt_status_t;
 
 /**
  * @brief The valid return codes
@@ -78,12 +63,8 @@ class mqtt {
 		/*
 		 * The MQTT client interface
 		 */
-		MQTT::Client
-				<
-					WifiIPStack,
-					Countdown,
-					MQTT_MAX_PACKET_SIZE
-				> 						client_if;
+		MQTT::Client <WifiIPStack, Countdown, MQTT_MAX_PACKET_SIZE>* \
+										client_if;
 
 		/*
 		 * The class status
@@ -157,14 +138,7 @@ class mqtt {
 		 * @param message	The message to publish
 		 * @return status	The status code
 		 */
-		mqtt_status_t publish(mqtt_topic_t topic, MQTT::Message message);
-
-	    /**
-	     * @brief Gets the internal mqtt interface class.
-	     *
-	     * @return handle	The wifi class handle
-	     */
-	    MQTT::Client* get_if();
+		mqtt_status_t publish(mqtt_topic_t topic, MQTT::Message* message);
 
 	    /**
 	     * @brief Gets the wifi internal stack handle.

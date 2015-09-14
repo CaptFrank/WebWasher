@@ -73,9 +73,7 @@ class bus {
 		 *
 		 * Accesses the bus status
 		 */
-		inline bus_status_t get_status(){
-			return status;
-		}
+		virtual bus_status_t get_status();
 
 		/*!
 		 * \brief Read multiple Bytes from a bus interface.

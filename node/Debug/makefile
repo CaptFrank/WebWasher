@@ -4,13 +4,15 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3
+CG_TOOL_ROOT := C:/Program Files/energia-0101E0015/hardware/tools/lm4f
 
 ORDERED_OBJS += \
 "./platform/sensor/sensor/math/fixed_t.o" \
 "./platform/sensor/sensor/physics/physics.o" \
 "./node.o" \
 "./platform/bus/i2c/bus_i2c.o" \
+"./platform/iface/mqtt.o" \
+"./platform/iface/wifi.o" \
 "./platform/sensor/drivers/bosch/bma222.o" \
 "./platform/sensor/drivers/ti/tmp006.o" \
 "./platform/sensor/sensor/i2c/sensor_i2c.o" \
@@ -18,18 +20,22 @@ ORDERED_OBJS += \
 "./platform/sensor/sensor/math/matrix.o" \
 "./platform/sensor/sensor/physics/press_altitude.o" \
 "./platform/sensor/sensor/sensor.o" \
-"./services/comms/mqtt.o" \
-"./services/comms/wifi.o" \
-"./services/data/daq.o" \
-"./services/service.o" \
-"./services/system/system.o" \
+"./service/services/coms/coms.o" \
+"./service/services/formatter/formatter.o" \
+"./service/services/system/system.o" \
+"./task/scheduler.o" \
+"./task/task.o" \
+"./task/tasks/daq.o" \
+"./task/tasks/idle.o" \
+"./task/tasks/publish.o" \
+"./task/tasks/update.o" \
 $(GEN_CMDS__FLAG) \
 -Wl,--start-group \
--Wl,-T"C:/ti/energia-0101E0014/hardware/cc3200/cores/cc3200/cc3200.ld" \
--l"lpcc3200_Wire" \
+-Wl,-T"C:/Program Files/energia-0101E0015/hardware/cc3200/cores/cc3200/cc3200.ld" \
 -l"lpcc3200_MQTTClient" \
 -l"lpcc3200_WiFi" \
 -l"lpcc3200_core" \
+-l"lpcc3200_Wire" \
 -l"m" \
 -l"c" \
 -l"gcc" \
@@ -43,28 +49,32 @@ RMDIR := RMDIR /S/Q
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
--include services/system/subdir_vars.mk
--include services/subdir_vars.mk
--include services/data/subdir_vars.mk
--include services/comms/subdir_vars.mk
+-include task/tasks/subdir_vars.mk
+-include task/subdir_vars.mk
+-include service/services/system/subdir_vars.mk
+-include service/services/formatter/subdir_vars.mk
+-include service/services/coms/subdir_vars.mk
 -include platform/sensor/sensor/subdir_vars.mk
 -include platform/sensor/sensor/physics/subdir_vars.mk
 -include platform/sensor/sensor/math/subdir_vars.mk
 -include platform/sensor/sensor/i2c/subdir_vars.mk
 -include platform/sensor/drivers/ti/subdir_vars.mk
 -include platform/sensor/drivers/bosch/subdir_vars.mk
+-include platform/iface/subdir_vars.mk
 -include platform/bus/i2c/subdir_vars.mk
 -include subdir_rules.mk
--include services/system/subdir_rules.mk
--include services/subdir_rules.mk
--include services/data/subdir_rules.mk
--include services/comms/subdir_rules.mk
+-include task/tasks/subdir_rules.mk
+-include task/subdir_rules.mk
+-include service/services/system/subdir_rules.mk
+-include service/services/formatter/subdir_rules.mk
+-include service/services/coms/subdir_rules.mk
 -include platform/sensor/sensor/subdir_rules.mk
 -include platform/sensor/sensor/physics/subdir_rules.mk
 -include platform/sensor/sensor/math/subdir_rules.mk
 -include platform/sensor/sensor/i2c/subdir_rules.mk
 -include platform/sensor/drivers/ti/subdir_rules.mk
 -include platform/sensor/drivers/bosch/subdir_rules.mk
+-include platform/iface/subdir_rules.mk
 -include platform/bus/i2c/subdir_rules.mk
 -include objects.mk
 
@@ -174,26 +184,32 @@ BIN_OUTPUTS__QUOTED += \
 # All Target
 all: node.out secondary-outputs
 
+dependents:
+	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug && $(MAKE) clean all
+	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug && $(MAKE) clean all
+	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug && $(MAKE) clean all
+	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug && $(MAKE) clean all
+
 # Tool invocations
-node.out: $(OBJS) $(GEN_CMDS)
+node.out: $(OBJS) $(GEN_CMDS) C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug/liblpcc3200_core.a C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug/liblpcc3200_WiFi.a C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug/liblpcc3200_MQTTClient.a C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug/liblpcc3200_Wire.a
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU Linker'
-	"C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc.exe" -march=armv7e-m -mthumb -fno-exceptions -DF_CPU=80000000L -DARDUINO=101 -DENERGIA=13 -Os -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall --entry ResetISR -nostartfiles -nostdlib -Wl,--gc-sections -L"C:/Users/fpapinea/workspace_v6_0/lpcc3200_core/Debug" -L"C:/Users/fpapinea/workspace_v6_0/lpcc3200_WiFi/Debug" -L"C:/Users/fpapinea/workspace_v6_0/lpcc3200_MQTTClient/Debug" -L"C:/Users/fpapinea/workspace_v6_0/lpcc3200_Wire/Debug" -o"node.out" $(ORDERED_OBJS)
+	"C:/Program Files/energia-0101E0015/hardware/tools/lm4f/bin/arm-none-eabi-gcc.exe" -march=armv7e-m -mthumb -fno-exceptions -DF_CPU=80000000L -DARDUINO=101 -DENERGIA=13 -Os -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall --entry ResetISR -nostartfiles -nostdlib -Wl,--gc-sections -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug" -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug" -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug" -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug" -o"node.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 node.bin: $(EXE_OUTPUTS)
 	@echo 'Invoking: GNU Objcopy Utility'
-	"C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-objcopy.exe" -O binary $(EXE_OUTPUTS__QUOTED) "node.bin"
+	"C:/Program Files/energia-0101E0015/hardware/tools/lm4f/bin/arm-none-eabi-objcopy.exe" -O binary $(EXE_OUTPUTS__QUOTED) "node.bin"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)$(BIN_OUTPUTS__QUOTED)
-	-$(RM) "node.d" "services\system\system.d" "services\service.d" "services\data\daq.d" "services\comms\mqtt.d" "services\comms\wifi.d" "platform\sensor\sensor\sensor.d" "platform\sensor\sensor\physics\press_altitude.d" "platform\sensor\sensor\math\fixed.d" "platform\sensor\sensor\math\matrix.d" "platform\sensor\sensor\i2c\sensor_i2c.d" "platform\sensor\drivers\ti\tmp006.d" "platform\sensor\drivers\bosch\bma222.d" "platform\bus\i2c\bus_i2c.d" 
+	-$(RM) "node.d" "task\tasks\daq.d" "task\tasks\idle.d" "task\tasks\publish.d" "task\tasks\update.d" "task\scheduler.d" "task\task.d" "service\services\system\system.d" "service\services\formatter\formatter.d" "service\services\coms\coms.d" "platform\sensor\sensor\sensor.d" "platform\sensor\sensor\physics\press_altitude.d" "platform\sensor\sensor\math\fixed.d" "platform\sensor\sensor\math\matrix.d" "platform\sensor\sensor\i2c\sensor_i2c.d" "platform\sensor\drivers\ti\tmp006.d" "platform\sensor\drivers\bosch\bma222.d" "platform\iface\mqtt.d" "platform\iface\wifi.d" "platform\bus\i2c\bus_i2c.d" 
 	-$(RM) "platform\sensor\sensor\physics\physics.d" "platform\sensor\sensor\math\fixed_t.d" 
-	-$(RM) "node.o" "services\system\system.o" "services\service.o" "services\data\daq.o" "services\comms\mqtt.o" "services\comms\wifi.o" "platform\sensor\sensor\sensor.o" "platform\sensor\sensor\physics\physics.o" "platform\sensor\sensor\physics\press_altitude.o" "platform\sensor\sensor\math\fixed.o" "platform\sensor\sensor\math\fixed_t.o" "platform\sensor\sensor\math\matrix.o" "platform\sensor\sensor\i2c\sensor_i2c.o" "platform\sensor\drivers\ti\tmp006.o" "platform\sensor\drivers\bosch\bma222.o" "platform\bus\i2c\bus_i2c.o" 
+	-$(RM) "node.o" "task\tasks\daq.o" "task\tasks\idle.o" "task\tasks\publish.o" "task\tasks\update.o" "task\scheduler.o" "task\task.o" "service\services\system\system.o" "service\services\formatter\formatter.o" "service\services\coms\coms.o" "platform\sensor\sensor\sensor.o" "platform\sensor\sensor\physics\physics.o" "platform\sensor\sensor\physics\press_altitude.o" "platform\sensor\sensor\math\fixed.o" "platform\sensor\sensor\math\fixed_t.o" "platform\sensor\sensor\math\matrix.o" "platform\sensor\sensor\i2c\sensor_i2c.o" "platform\sensor\drivers\ti\tmp006.o" "platform\sensor\drivers\bosch\bma222.o" "platform\iface\mqtt.o" "platform\iface\wifi.o" "platform\bus\i2c\bus_i2c.o" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
@@ -201,6 +217,10 @@ secondary-outputs: $(BIN_OUTPUTS)
 
 .PHONY: all clean dependents
 .SECONDARY:
+C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug/liblpcc3200_core.a:
+C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug/liblpcc3200_WiFi.a:
+C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug/liblpcc3200_MQTTClient.a:
+C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug/liblpcc3200_Wire.a:
 
 -include ../makefile.targets
 

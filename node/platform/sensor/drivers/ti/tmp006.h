@@ -8,7 +8,7 @@
 #ifndef PLATFORM_SENSOR_DRIVERS_TI_TMP006_H_
 #define PLATFORM_SENSOR_DRIVERS_TI_TMP006_H_
 
-#include <platform/sensor/i2c/sensor_i2c.h>
+#include <platform/sensor/sensor/i2c/sensor_i2c.h>
 
 /* TWI/I2C address (write @ 0x16 on bus, read @ 0x17 on bus) */
 #define TMP006_I2C_ADDR         	(0x18)
@@ -131,6 +131,9 @@ typedef struct {
 
 #define TMP006_ID_VAL				(0x0067)
 
+/** @brief Data definition */
+typedef sensor_data_t tmp006_data_t;
+
 /**
  * @brief TMP006 Cache
  */
@@ -141,9 +144,6 @@ typedef struct {
 	tmp006_data_t					voltage;
 	tmp006_temps_t					temps;
 }tmp006_cache_t;
-
-/** @brief Data definition */
-typedef sensor_data_t tmp006_data_t;
 
 /**
  * \brief The TMP006 I2C Bus Interface
@@ -156,7 +156,7 @@ typedef sensor_data_t tmp006_data_t;
  *
  * 	@extends sensor_i2c_t
  */
-class tmp006: private sensor_i2c_t {
+class tmp006: public sensor_i2c_t {
 
 	/*
 	 * Private class attributes
@@ -172,7 +172,7 @@ class tmp006: private sensor_i2c_t {
 		/*
 		 * Data
 		 */
-		tmp006_cache_t datacache;
+		tmp006_cache_t 					cache;
 
 	/*
 	 * Public class methods
@@ -434,6 +434,26 @@ class tmp006: private sensor_i2c_t {
 		 * @param value		The value to write
 		 */
 		bool edit_conf(uint16_t value);
+
+		/**
+		 * \brief Set a sensor operational threshold.
+		 *
+		 * \param   threshold   A specified sensor operational threshold.
+		 * \param   value       The value of the specified threshold.
+		 * \return  bool     true if the call succeeds, else false is returned.
+		 */
+		bool set_threshold(sensor_threshold_t threshold, int16_t value);
+
+		/**
+		 * \brief Get a sensor operational threshold.
+		 *
+		 * \param   sensor      The address of an initialized sensor descriptor.
+		 * \param   threshold   A specified sensor operational threshold.
+		 * \param   value       Address of location to return threshold value
+		 *
+		 * \return  bool     true if the call succeeds, else false is returned.
+		 */
+		bool get_threshold(sensor_threshold_t threshold, int16_t *value);
 
 };
 

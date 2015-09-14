@@ -34,7 +34,7 @@
  * The update task is the task that updates the local and
  * global mapped data caches.
  */
-class update : protected task_t {
+class update : public task_t {
 
 	/*
 	 * Public access methods

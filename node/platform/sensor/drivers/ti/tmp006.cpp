@@ -52,9 +52,9 @@ tmp006::tmp006(bus_i2c_t* iface) : sensor_i2c(iface, TMP006_TRANSACTION_BYTE){
 		/*
 		 * Set the driver function table and capabilities pointer.
 		 */
-		caps.feature			= 	SENSOR_CAPS_SELFTEST   |
-									SENSOR_CAPS_TEMPERATURE |
-									SENSOR_CAPS_VOLTAGE;
+		caps.feature			= 	(sensor_feature_t) 	(SENSOR_CAPS_SELFTEST   |
+														SENSOR_CAPS_TEMPERATURE |
+														SENSOR_CAPS_VOLTAGE);
 
 		caps.vendor				= 	SENSOR_VENDOR_TI;
 		caps.range_table		= 	range_table;
@@ -63,7 +63,7 @@ tmp006::tmp006(bus_i2c_t* iface) : sensor_i2c(iface, TMP006_TRANSACTION_BYTE){
 		caps.band_count			= 	ARRAYSIZE(band_table);
 		caps.units				= 	SENSOR_UNITS_deg_Celcius;
 		caps.scale				= 	SENSOR_SCALE_one;
-		caps.name				= 	"TMP006 Digital temperature sensor"
+		caps.name				= 	"TMP006 Digital temperature sensor";
 
 		/*
 		 * Set the driver (device) default configurations and
@@ -82,21 +82,21 @@ tmp006::tmp006(bus_i2c_t* iface) : sensor_i2c(iface, TMP006_TRANSACTION_BYTE){
 		/*
 		 * Set Sensor Type
 		 */
-		type					= (SENSOR_TYPE_TEMPERATURE |
-								   SENSOR_TYPE_VOLTAGE);
-
-		/*
-		 * Set the cache
-		 */
-		cache 					= &datacache;
+		type					= (sensor_type_t)(SENSOR_TYPE_TEMPERATURE |
+								   	   	   	   	   SENSOR_TYPE_VOLTAGE);
 
 		/*
 		 * Set the message type
 		 */
 		msg 					= MSG_TYPE_TEMP_DATA;
 
+		/*
+		 * Set cache type
+		 */
+		cache_type				= CACHE_TYPE_TEMP_DATA;
+
 		/* Check bus status and return true if ok */
-		if ((STATUS_OK == bus->get_status())){
+		if (bus->get_status() == STATUS_OK){
 
 			/*
 			 * No Errors
@@ -149,7 +149,7 @@ bool tmp006::update(){
 	 */
 	rc |= set_state(SENSOR_STATE_SLEEP);
 
-	return (rc)
+	return (rc);
 }
 
 
@@ -218,7 +218,7 @@ bool tmp006::read(sensor_read_t type){
 	 * Not supported
 	 */
 	default:
-		sensor->err = SENSOR_ERR_FUNCTION;
+		err = SENSOR_ERR_FUNCTION;
 		return false;
 	}
 
@@ -292,7 +292,8 @@ bool tmp006::sleep(int arg){
 	/*
 	 * Power off the device
 	 */
-	return poweroff(true);
+	poweroff(true);
+	return true;
 }
 
 /**
@@ -340,6 +341,9 @@ bool tmp006::get_threshold(sensor_threshold_t threshold, int16_t *value){
  */
 bool tmp006::ioctl(sensor_command_t cmd, void *arg){
 
+	// Container
+	sensor_state_t mode;
+
 	/*
 	 * Switch on the commands
 	 */
@@ -355,16 +359,15 @@ bool tmp006::ioctl(sensor_command_t cmd, void *arg){
 	case SENSOR_DISABLE_EVENT:
 
 	default:
-		sensor->err = SENSOR_ERR_UNSUPPORTED;
+		err = SENSOR_ERR_UNSUPPORTED;
 		return false;
 
 	/*
 	 * Setting the state
 	 */
 	case SENSOR_SET_STATE:
-
-		sensor_state_t const mode = \
-						*((sensor_state_t *)arg);
+	{
+		mode = *((sensor_state_t *)arg);
 
 		if ((mode != mod) && set_state(mode)) {
 			mod = (mode == SENSOR_STATE_RESET)
@@ -373,15 +376,20 @@ bool tmp006::ioctl(sensor_command_t cmd, void *arg){
 		} else {
 			return false;
 		}
-
+	};
 
 	case SENSOR_SET_SAMPLE_RATE:
+	{
 		return set_conv_rate((tmp006_conv_rate_t *)arg);
+	};
 
 	case SENSOR_GET_SAMPLE_RATE:
+	{
 		return get_conv_rate((tmp006_conv_rate_t *)arg);
+	};
 
 	case SENSOR_READ_SCALAR:
+	{
 		if(! get_die_temp()){
 
 			/*
@@ -407,6 +415,7 @@ bool tmp006::ioctl(sensor_command_t cmd, void *arg){
 			 */
 			return true;
 		}
+	};
 	}
 }
 
@@ -464,7 +473,7 @@ bool tmp006::set_state(sensor_state_t mode){
 					(SENSOR_STATE_LOWEST_POWER == mode)){
 
 				// We power it on and disable it
-				poweroff(hal, false);
+				poweroff(false);
 
 				// Change mode to active
 				mode = SENSOR_STATE_NORMAL;
@@ -475,7 +484,7 @@ bool tmp006::set_state(sensor_state_t mode){
 					SENSOR_STATE_SUSPEND == mode){
 
 				// We disable the device
-				enable(hal, true);
+				enable(true);
 			}
 
 			break;
@@ -488,7 +497,7 @@ bool tmp006::set_state(sensor_state_t mode){
 					(SENSOR_STATE_LOWEST_POWER == mode)){
 
 				// We power it on and disable it
-				poweroff(hal, false);
+				poweroff(false);
 
 				// Change mode to active
 				mode = SENSOR_STATE_NORMAL;
@@ -499,7 +508,7 @@ bool tmp006::set_state(sensor_state_t mode){
 					SENSOR_STATE_HIGHEST_POWER == mode){
 
 				// We disable the device
-				enable(hal, false);
+				enable(false);
 			}
 			break;
 
@@ -508,13 +517,13 @@ bool tmp006::set_state(sensor_state_t mode){
 		case SENSOR_STATE_LOWEST_POWER:
 
 			// Power down the device
-			poweroff(hal, false);
+			poweroff(false);
 			break;
 
 		case SENSOR_STATE_RESET:
 
 			// Reset the device
-			reset(NULL);
+			reset(0);
 			break;
 
 		default:
@@ -573,12 +582,12 @@ bool tmp006::get_device_id(){
 	/*
 	 * Get the device id
 	 */
-	if(sizeof(tmp006_id_regs_t) != bus->read(
+	if(bus->read(
 				TMP006_I2C_ADDR,				// Destination
 				sizeof(tmp006_id_regs_t),		// Size to read
-				TMP006_ID_ADDR,					// Memory index to read from
-				&id								// Where to store the value
-			)){
+				(uint8_t)TMP006_ID_ADDR,		// Memory index to read from
+				(uint8_t*)&id					// Where to store the value
+			) != sizeof(tmp006_id_regs_t)){
 
 		/*
 		 * Error present
@@ -673,8 +682,8 @@ bool tmp006::get_die_temp(){
 	if(TMP006_TRANSACTION_BYTE != bus->read(
 				TMP006_I2C_ADDR,				// Destination
 				TMP006_TRANSACTION_BYTE,		// Size to read
-				TMP006_TEMPERATURE,				// Memory index to read from
-				&cache.temp_die.temperature.value		// Where to store the value
+				(uint8_t)TMP006_TEMPERATURE,	// Memory index to read from
+				(uint8_t*)&cache.temp_die.temperature.value	// Where to store the value
 			)){
 
 		/*
@@ -710,8 +719,8 @@ bool tmp006::get_volt(){
 	if(TMP006_TRANSACTION_BYTE != bus->read(
 				TMP006_I2C_ADDR,				// Destination
 				TMP006_TRANSACTION_BYTE,		// Size to read
-				TMP006_VOLTAGE,					// Memory index to read from
-				&cache.voltage.voltage.value			// Where to store the value
+				(uint8_t)TMP006_VOLTAGE,		// Memory index to read from
+				(uint8_t*)&cache.voltage.voltage.value	// Where to store the value
 			)){
 
 		/*
@@ -750,7 +759,8 @@ void tmp006::enable(bool enable){
 	/*
 	 * Return the state of the bus
 	 */
-	return edit_conf(regs.status_byte);
+	edit_conf(regs.status_byte);
+	return;
 }
 
 /**
@@ -777,7 +787,8 @@ void tmp006::poweroff(bool enable){
 	/*
 	 * Return the state of the bus
 	 */
-	return edit_conf(regs.status_byte);
+	edit_conf(regs.status_byte);
+	return;
 
 }
 
@@ -809,8 +820,8 @@ bool tmp006::get_conv_rate (tmp006_conv_rate_t *rate){
 	if(sizeof(tmp006_event_regs_t) != bus->read(
 				TMP006_I2C_ADDR,					// Destination
 				sizeof(tmp006_event_regs_t),		// Size to read
-				TMP006_BURST_ADDR,					// Memory index to read from
-				&regs								// Where to store the value
+				(uint8_t)TMP006_BURST_ADDR,			// Memory index to read from
+				(uint8_t*)&regs						// Where to store the value
 			)){
 
 		/*
@@ -837,8 +848,8 @@ bool tmp006::edit_conf(uint16_t value){
 	if(TMP006_TRANSACTION_BYTE != bus->read(
 				TMP006_I2C_ADDR,					// Destination
 				TMP006_TRANSACTION_BYTE,			// Size to read
-				TMP006_CONFIGURATION,				// Memory index to read from
-				&value								// Where to store the value
+				(uint8_t)TMP006_CONFIGURATION,		// Memory index to read from
+				(uint8_t*)&value					// Where to store the value
 			)){
 
 		/*

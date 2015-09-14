@@ -8,7 +8,7 @@
 #ifndef MODULES_DRIVERS_DRIVERS_H_
 #define MODULES_DRIVERS_DRIVERS_H_
 
-#include <platform/platform.h>
+//#include <platform/platform.h>
 
 /*!
  * This includes the driver files based on the defined

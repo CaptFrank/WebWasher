@@ -8,8 +8,10 @@
 #ifndef PLATFORM_SENSOR_SENSOR_SENSOR_H_
 #define PLATFORM_SENSOR_SENSOR_SENSOR_H_
 
+#include <configs.h>
 #include "physics/physics.h"
 #include <platform/bus/bus.h>
+//#include <service/services/coms/coms.h>
 
 /** \brief Sensor Type Constants */
 typedef enum {
@@ -529,14 +531,14 @@ class sensor {
 	protected:
 
 		/*
-		 * Bus Handle
-		 */
-		bus_t*					bus;			/**< Bus Handle */
-
-		/*
 		 * Execution handlers
 		 */
 		sensor_event_callback_t	handlers;		/**< Sensor handlers */
+
+		/*
+		 * Bus Handle
+		 */
+		bus_t*					bus;			/**< Bus Handle */
 
 	/*
 	 * Public sensor attributes
@@ -546,7 +548,12 @@ class sensor {
 		/*
 		 * Virtual cache
 		 */
-		virtual void* 			cache;
+		void* 			cache;
+
+		/*
+		 * Cache type
+		 */
+		uint16_t 		cache_type;
 
 		/*
 		 * Message type
@@ -563,6 +570,25 @@ class sensor {
 		sensor_error_t 			err;            /**< Runtime errors */
 		int16_t 				channel;        /**< Channel number within sensor */
 		void 					*aux;           /**< API extensions */
+
+		/**
+		 * \brief Updates the internal cache of the sensor.
+		 *
+		 * In this function, the system reads the newest data from the sensor and
+		 * updates the internal caches that are mapped to the internal system BIOS.
+		 * We do this to obtain a transparency between the BIOS and the sensor.
+		 *
+		 * @return	bool 	true of the update was successful.
+		 */
+		virtual bool update();
+
+		/**
+		 * Returns object address.
+		 */
+		void* get_address(){
+			return this;
+		}
+
 
 	/*
 	 * Protected sensor methods
@@ -637,17 +663,6 @@ class sensor {
 		/*
 		 * Virtual Methods
 		 */
-
-		/**
-		 * \brief Updates the internal cache of the sensor.
-		 *
-		 * In this function, the system reads the newest data from the sensor and
-		 * updates the internal caches that are mapped to the internal system BIOS.
-		 * We do this to obtain a transparency between the BIOS and the sensor.
-		 *
-		 * @return	bool 	true of the update was successful.
-		 */
-		virtual bool update();
 
 		/**
 		 * \brief Get sensor hardware device ID.
@@ -861,7 +876,7 @@ class sensor {
 		 *
 		 * \return Scaled signed sensor data in standard engineering units.
 		 */
-		static inline int32_t raw_to_scaled(const sensor* sensor, int32_t counts){
+		static inline int32_t raw_to_scaled(sensor* sensor, int32_t counts){
 
 			/* The unit increment per count is peak-to-peak range divided
 			 * by full-scale resolution.
@@ -882,7 +897,7 @@ class sensor {
 		 *
 		 * \return Scaled signed sensor data in standard engineering units.
 		 */
-		static inline int32_t scaled_to_raw(const sensor* sensor, int32_t value){
+		static inline int32_t scaled_to_raw(sensor* sensor, int32_t value){
 
 			/* The unit increment per count is peak-to-peak range divided
 			 * by full-scale resolution.
@@ -904,9 +919,6 @@ class sensor {
 		}
 };
 
-/**
- * @brief Typedef for the class
- */
 typedef sensor sensor_t;
 
 #endif /* PLATFORM_SENSOR_SENSOR_SENSOR_H_ */

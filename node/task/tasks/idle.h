@@ -17,7 +17,8 @@
 /*
  * Peripherals
  */
-#include <service/services.h>
+#include <service/services/coms/coms.h>
+
 /*
  * Local task defines
  */
@@ -32,7 +33,7 @@
  * The idle task is a task that is present to buffer the
  * cpu and to make it sleep when needed.
  */
-class idle : protected task_t {
+class idle : public task_t {
 
 	/*
 	 * Public access methods

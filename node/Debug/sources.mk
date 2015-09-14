@@ -109,15 +109,17 @@ S64_DEPS__QUOTED :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 . \
-services/system \
-services \
-services/data \
-services/comms \
+task/tasks \
+task \
+service/services/system \
+service/services/formatter \
+service/services/coms \
 platform/sensor/sensor \
 platform/sensor/sensor/physics \
 platform/sensor/sensor/math \
 platform/sensor/sensor/i2c \
 platform/sensor/drivers/ti \
 platform/sensor/drivers/bosch \
+platform/iface \
 platform/bus/i2c \
 

@@ -1,4 +1,3 @@
-
 /**
  * Global Library Includes
  */
@@ -32,16 +31,16 @@ bma222_t* bma222 	= new bma222_t(bus);
 /*
  * Sensor list
  */
-sensor_t sensors[]	= {
-		tmp006,
-		bma222,
+sensor_t* sensors[NUMBER_OF_SENSORS + 1]	= {
+		(sensor_t*)tmp006,
+		(sensor_t*)bma222,
 		NULL
 };
 
 /*
  * Task list
  */
-static task_t* tasks 	= {
+static task_t* tasks[TASK_NUMBER] 	= {
 
 #ifdef DAQ_TASK_ENABLE
 		/*
@@ -52,7 +51,7 @@ static task_t* tasks 	= {
 		 * Thread Id 	= 1
 		 * Interval 	= 100ms
 		 */
-		new daq_t		(system_t::sensors /*	*/),
+		new daq_t		(&system_t::sensors /*	*/),
 #endif
 
 #ifdef UPDATE_TASK_ENABLE
@@ -116,8 +115,8 @@ void setup() {
 	/*
 	 * Register the sensor caches
 	 */
-	system_t::BIOS_register(tmp006);
-	system_t::BIOS_register(bma222);
+	system_t::BIOS_register((sensor_t*)tmp006);
+	system_t::BIOS_register((sensor_t*)bma222);
 
 	/*
 	 * Boot the OS

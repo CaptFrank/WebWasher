@@ -5,7 +5,7 @@
  *      Author: francis-ccs
  */
 
-#include <services/comms/mqtt.h>
+#include "mqtt.h"
 
 /**
  * @brief The MQTT Interface Constructor
@@ -18,6 +18,11 @@
 mqtt::mqtt(WifiIPStack* ipstack){
 
 	/*
+	 * All is good
+	 */
+	status = STATUS_OK;
+
+	/*
 	 * Set the interanl reference
 	 */
 	stack_if = ipstack;
@@ -25,19 +30,13 @@ mqtt::mqtt(WifiIPStack* ipstack){
 	/*
 	 * Create the client
 	 */
-	client_if = \
-			MQTT::Client<WifiIPStack, Countdown, MQTT_MAX_PACKET_SIZE> (stack_if);
+	client_if = new \
+			MQTT::Client<WifiIPStack, Countdown, MQTT_MAX_PACKET_SIZE> (*stack_if);
 
 	/*
 	 * Set the status
 	 */
-	if(stack_if && client_if){
-
-		/*
-		 * All is good
-		 */
-		status = STATUS_OK;
-	}else{
+	if(!stack_if){
 
 		/*
 		 * Error occured
@@ -68,15 +67,15 @@ mqtt_status_t mqtt::connect(mqtt_broker_t address, mqtt_port_t port){
 	/*
 	 * Connect to the server through the ip interface
 	 */
-	if(!client_if.isConnected()){
+	if(!client_if->isConnected()){
 
 		PRINT("Connecting to: "); 	PRINTLN(MQTT_BROKER_ADDR);
-		PRINT("With Sensor id: ");	PRINTLN(MQTT_SENSOR_ID)
+		PRINT("With Sensor id: ");	PRINTLN(MQTT_SENSOR_ID);
 
 		/*
 		 * Connect
 		 */
-		while((temp_status = \
+		while((temp_status = (wl_status_t)\
 				stack_if->connect(MQTT_BROKER_ADDR, \
 						MQTT_BROKER_PORT)) != WL_CONNECTED){
 
@@ -118,7 +117,7 @@ mqtt_status_t mqtt::connect(mqtt_broker_t address, mqtt_port_t port){
 	/*
 	 * Connect the the mqtt broker
 	 */
-    while ((rc = client_if.connect(options)) != MQTT_SUCCESS_STATUS);
+    while ((rc = client_if->connect(options)) != MQTT_SUCCESS_STATUS);
     PRINTLN("Connected to the broker.");
 
     /*
@@ -140,7 +139,7 @@ mqtt_status_t mqtt::disconnect(){
 	/*
 	 * Disconnect
 	 */
-	if(client_if.disconnect() != MQTT_SUCCESS_STATUS){
+	if(client_if->disconnect() != MQTT_SUCCESS_STATUS){
 
 		/*
 		 * Issue
@@ -195,7 +194,8 @@ mqtt_status_t mqtt::subscribe(mqtt_topic_t topic, mqtt_handler_t handler){
 	 * Subscribe
 	 */
 	if((rc = \
-			client_if.subscribe(topic, MQTT::QOS0, handler)) != MQTT_SUCCESS_STATUS){
+			(mqtt_status_t)client_if->subscribe(topic, MQTT::QOS0, handler)) \
+			!= MQTT_SUCCESS_STATUS){
 
 		/*
 		 * Error occured
@@ -230,7 +230,7 @@ mqtt_status_t mqtt::unsubscribe(mqtt_topic_t topic){
 	/*
 	 * Unsubscribe
 	 */
-	return unsubscribe(topic)
+	return (mqtt_status_t)unsubscribe(topic);
 }
 
 /**
@@ -240,7 +240,7 @@ mqtt_status_t mqtt::unsubscribe(mqtt_topic_t topic){
  * @param message	The message to publish
  * @return status	The status code
  */
-mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message message){
+mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message* message){
 
 	/*
 	 * Status
@@ -250,13 +250,13 @@ mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message message){
 	/*
 	 * Setup the message
 	 */
-	message.qos 		= MQTT::QOS0;
-	message.retained 	= false;
+	message->qos 		= MQTT::QOS0;
+	message->retained 	= false;
 
 	/*
 	 * Publish
 	 */
-	rc = client_if.publish(topic, message);
+	rc = (mqtt_status_t)client_if->publish((const char*)topic, *message);
 
 	/*
 	 * Check for success
@@ -272,15 +272,6 @@ mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message message){
 		PRINTLN(rc);
 	}
 	return rc;
-}
-
-/**
- * @brief Gets the internal mqtt interface class.
- *
- * @return handle	The wifi class handle
- */
-MQTT::Client* mqtt::get_if(){
-	return client_if;
 }
 
 /**

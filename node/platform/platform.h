@@ -14,6 +14,8 @@
 #define INCLUDE_BMA222
 #define INCLUDE_TMP006
 
+// #define BMA222_IRQ // Attach interrupt
+
 /*
  * Platform includes:
  * 	- I2c bus
@@ -21,11 +23,10 @@
  * 	- Wifi
  * 	- Mqtt
  */
-#include "bus/i2c/bus_i2c.h"
-#include "drivers/drivers.h"
 #include "iface/wifi.h"
 #include "iface/mqtt.h"
-
+#include "bus/i2c/bus_i2c.h"
+#include "sensor/drivers/drivers.h"
 /*
  * Include the queue
  */
