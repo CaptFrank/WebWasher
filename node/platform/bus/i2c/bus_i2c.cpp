@@ -84,12 +84,12 @@ size_t bus_i2c::read(uint8_t addr, i2c_bus_packet_t* packet){
 	return (read);
 }
 
-size_t bus_i2c::read(uint8_t addr, uint8_t size,
+size_t bus_i2c::read(int addr, unsigned int  size,
 						uint8_t index, uint8_t* data){
 
 	// Container
-	bus_packet_t packet;
-	uint8_t read;
+	i2c_bus_packet_t packet;
+	uint8_t read_byte;
 
 	/*
 	 * Packetize
@@ -99,7 +99,7 @@ size_t bus_i2c::read(uint8_t addr, uint8_t size,
 	/*
 	 * Read
 	 */
-	read = read(addr, &packet);
+	read_byte = read(addr, &packet);
 
 	/*
 	 * Get the data
@@ -109,7 +109,7 @@ size_t bus_i2c::read(uint8_t addr, uint8_t size,
 	/*
 	 * Return the size
 	 */
-	return read;
+	return read_byte;
 }
 
 /*!
@@ -146,11 +146,11 @@ size_t bus_i2c::write(uint8_t addr, i2c_bus_packet_t* packet){
 	return (written);
 }
 
-size_t bus_i2c::write(uint8_t addr, uint8_t size,
+size_t bus_i2c::write(int addr, unsigned int size,
 						uint8_t index, uint8_t* data){
 
 	// Container
-	bus_packet_t packet;
+	i2c_bus_packet_t packet;
 
 	/*
 	 * Packetize

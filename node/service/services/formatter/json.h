@@ -14,7 +14,7 @@
 #define 	MQTT_ACC_JSON				"{"								\
 											"time:%s,"					\
 											"acc:{"						\
-												"temp:%d, "		\
+												"temp:%d, "				\
 												"x:%d, "				\
 												"y:%d, "				\
 												"z:%d "					\
@@ -27,8 +27,8 @@
 #define 	MQTT_TEMP_JSON				"{"								\
 											"time:%s,"					\
 											"temp:{"					\
-												"objtemp:%d,"			\
-												"dietemp:%d,"			\
+												"objtemp:%f,"			\
+												"dietemp:%f,"			\
 												"volt:%d"				\
 											"}"							\
 										"}"								\
@@ -47,15 +47,15 @@
  */
 #define 	MQTT_STATUS_JSON			"{"								\
 											"time:%s,"					\
-											"device:{"					\	// Device
-												"status:%d, "			\
+											"device:{"					\
+												"status:%d,"			\
 												"alive:%d,"				\
-												"runtime:%d, "			\
-												"verion:%d, "			\
+												"runtime:%d,"			\
+												"verion:%d,"			\
 												"id:%d"					\
 											"}, "						\
-											"coms:{"					\	// Coms
-												"mqtt:{"				\	// MQTT
+											"coms:{"					\
+												"mqtt:{"				\
 													"status:%d,"		\
 													"broker:%s,"		\
 													"port:%d,"			\
@@ -73,7 +73,7 @@
 														"},"			\
 													"},"				\
 												"},"					\
-												"ip:{"					\	// IP
+												"ip:{"					\
 													"status:%d,"		\
 													"socket:%d,"		\
 													"ip:%s,"			\

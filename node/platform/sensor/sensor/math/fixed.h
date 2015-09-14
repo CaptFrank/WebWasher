@@ -93,12 +93,12 @@ private:
 		return 1.0 / (1L << Q);
 	}
 
-	inline double min () const {
-		return -(1L << QI ());
-	}
-	inline double max () const {
-		return +(1L << QI ()) - resolution ();
-	}
+//	inline double min () const {
+//		return -(1L << QI ());
+//	}
+//	inline double max () const {
+//		return +(1L << QI ()) - resolution ();
+//	}
 
 public:
 	/** \name class construction and type conversion */

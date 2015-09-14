@@ -9,8 +9,12 @@
 #define SERVICE_SERVICES_FORMATTER_FORMATTER_H_
 
 #include <time.h>
+#include <configs.h>
 #include <platform/platform.h>
-#include <service/services/formatter/json.h>
+#include <service/services/coms/coms.h>
+#include <service/services/system/system.h>
+
+#include "strings.h"
 
 /**
  * @brief String table entry
@@ -38,10 +42,12 @@ class formatter {
 		/*
 		 * Strings
 		 */
-		static char* acc_json			[50];
-		static char* temp_json			[50];
-		static char* heartbeat_json		[50];
-		static char* status_json		[500];
+		static char acc_json			[50];
+		static char temp_json			[50];
+		static char heartbeat_json		[50];
+		static char status_json			[500];
+
+		static msg_t* msg;
 
 		/**
 		 * @brief Default constructor

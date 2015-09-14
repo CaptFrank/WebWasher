@@ -21,23 +21,26 @@
  * @extends senor_t
  * @extends bus_i2c_t
  */
-class sensor_i2c : protected sensor_t {
+class sensor_i2c : public sensor {
 
 	/*
 	 * Private context
 	 */
 	private:
 
-		/*
-		 * Bus Handle
-		 */
-		bus_i2c_t*					bus;						/**< Bus Handle */
 		bus_packet_t				packet;						/**< Internal bus packet */
 		uint8_t						transaction_resolution;		/**< Transaction Resolution (16bit/8bit) */
+
 	/*
 	 * Protected class methods
 	 */
 	protected:
+
+		/*
+		 * Bus Handle
+		 */
+		bus_i2c_t*					bus;						/**< Bus Handle */
+		cache_t						cache_type;					/**< Sensor cache type */
 
 		/*!
 		 * \brief Initialize the bus I/O interface.

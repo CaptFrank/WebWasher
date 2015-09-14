@@ -5,7 +5,7 @@
  *      Author: fpapinea
  */
 
-#include <services/tasks/idle.h>
+#include <task/tasks/idle.h>
 
 /**
  * @brief The default constructor
@@ -56,7 +56,7 @@ void idle::idle_task_cb(){
 	digitalWrite(HEARTBEAT_LED, HIGH);
 
 	// Send the heartbeat message
-	if(coms_service->send(MSG_TYPE_HEARTBEAT, NULL) != STATUS_OK){
+	if(coms_service->send(MSG_TYPE_HEARTBEAT, NULL) != MQTT_SUCCESS_STATUS){
 
 		/*
 		 * We couldn't send the heartbeat message, so we reboot

@@ -5,7 +5,7 @@
  *      Author: fpapinea
  */
 
-#include <services/comms/wifi.h>
+#include "wifi.h"
 #include <configs.h>
 
 /**
@@ -121,7 +121,7 @@ wl_status_t wifi::connect(wifi_ssid_t ssid, wifi_pass_t pass){
  * @return bool		True if success, False if failed
  */
 wl_status_t wifi::disconnect(){
-	return wifi_if->disconnect();
+	return (wl_status_t)wifi_if->disconnect();
 }
 
 /**

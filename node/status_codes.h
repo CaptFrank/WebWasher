@@ -74,6 +74,8 @@ enum status_code {
 	ERR_TIMER_ALREADY_RUNNING   =  -13, //!< Timer already running
 	ERR_TIMER_NOT_RUNNING   =  -14, //!< Timer not running
 	ERR_ABORTED             =  -15, //!< Operation aborted by user
+	ERR_BUFFER_OVERFLOW		=  -16,
+	ERR_FAILURE_STATUS		=  -17,
 	/**
 	 * \brief Operation in progress
 	 *
@@ -87,5 +89,26 @@ enum status_code {
 };
 
 typedef enum status_code status_code_t;
+
+/**
+ * @brief The MQTT connection status
+ */
+typedef enum {
+	MQTT_BUFFER_OVERFLOW 	= ERR_BUFFER_OVERFLOW,	//!< MQTT_BUFFER_OVERFLOW
+	MQTT_FAILURE_STATUS 	= ERR_FAILURE_STATUS,	//!< MQTT_FAILURE_STATUS
+	MQTT_IDLE_STATUS 		= 0,	//!< MQTT_IDLE_STATUS
+	MQTT_SUCCESS_STATUS 	= 0,	//!< MQTT_SUCCESS_STATUS
+	MQTT_CONNECTED,      			//!< MQTT_CONNECTED
+	MQTT_CONNECT_FAILED, 			//!< MQTT_CONNECT_FAILED
+	MQTT_CONNECTION_LOST,			//!< MQTT_CONNECTION_LOST
+	MQTT_DISCONNECT_FAILED,			//!< MQTT_DISCONNECT_FAILED
+	MQTT_DISCONNECTED,   			//!< MQTT_DISCONNECTED
+} mqtt_status_t;
+
+typedef union {
+
+	status_code_t sys_code;
+	mqtt_status_t mqtt_code;
+}status_t;
 
 #endif /* MODULES_COMMON_STATUS_CODES_H_ */

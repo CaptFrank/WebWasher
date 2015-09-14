@@ -6,6 +6,7 @@
  */
 
 #include <service/services/formatter/formatter.h>
+#include "json.h"
 
 
 /**
@@ -54,12 +55,14 @@ formatter::formatter(){
 	status_cache->coms_data.mqtt_data.broker.string						= MQTT_BROKER_ADDR;
 	status_cache->coms_data.mqtt_data.port								= MQTT_BROKER_PORT;
 	status_cache->coms_data.mqtt_data.ver								= MQTT_VERSION;
-	status_cache->coms_data.mqtt_data.id								= MQTT_SENSOR_ID
+	status_cache->coms_data.mqtt_data.id								= MQTT_SENSOR_ID;
 	status_cache->coms_data.mqtt_data.topics.pub.temp.string			= MQTT_PUBLISH_DATA_TEMP;
 	status_cache->coms_data.mqtt_data.topics.pub.acc.string				= MQTT_PUBLISH_DATA_ACC;
 	status_cache->coms_data.mqtt_data.topics.pub.status.string			= MQTT_PUBLISH_STATUS;
-	status_cache->coms_data.mqtt_data.topics.sub.glob					= MQTT_SUB_TOPIC_1;
-	status_cache->coms_data.mqtt_data.topics.sub.local					= MQTT_SUB_TOPIC_2;
+	status_cache->coms_data.mqtt_data.topics.sub.glob.string			= MQTT_SUB_TOPIC_1;
+	status_cache->coms_data.mqtt_data.topics.sub.glob.len				= strlen(MQTT_SUB_TOPIC_1);
+	status_cache->coms_data.mqtt_data.topics.sub.local.string			= MQTT_SUB_TOPIC_2;
+	status_cache->coms_data.mqtt_data.topics.sub.local.len				= strlen(MQTT_SUB_TOPIC_2);
 
 	/*
 	 * IP
@@ -82,7 +85,10 @@ formatter::formatter(){
 msg_t* formatter::format(cache_t type){
 
 	// Container
-	msg_t string;
+	bma222_cache_t* acc_cache;
+	tmp006_cache_t* temp_cache;
+	heartbeat_cache_t* heart_cache;
+	status_cache_t* status_cache;
 
 	/*
 	 * Get the time
@@ -98,93 +104,92 @@ msg_t* formatter::format(cache_t type){
 		 * Accelerometer cache update
 		 */
 		case CACHE_TYPE_ACC_DATA:
+		{
 
 			/*
 			 * Get the cache
 			 */
-			bma222_cache_t* acc_cache = \
+			acc_cache = \
 				(bma222_cache_t*)system_t::BIOS_cache(CACHE_TYPE_ACC_DATA);
 
 			/*
 			 * Format
 			 */
 			sprintf(
-					string_table[type],
+					string_table[type].string,
 					MQTT_ACC_JSON,
 					time,
-
 					acc_cache->temp.temperature.value,
 					acc_cache->acc.acc.axis.x,
 					acc_cache->acc.acc.axis.y,
 					acc_cache->acc.acc.axis.z
 					);
-			break;
+		}break;
 
 		/*
 		 * Temperature cache update
 		 */
 		case CACHE_TYPE_TEMP_DATA:
-
+		{
 			/*
 			 * Get the cache
 			 */
-			tmp006_cache_t* temp_cache = \
+			temp_cache = \
 				(tmp006_cache_t*)system_t::BIOS_cache(CACHE_TYPE_TEMP_DATA);
 
 			/*
 			 * Format
 			 */
 			sprintf(
-					string_table[type],
+					string_table[type].string,
 					MQTT_TEMP_JSON,
 					time,
-
 					temp_cache->temps.obj_temp,
 					temp_cache->temps.die_temp,
 					temp_cache->voltage.voltage.value
 					);
-			break;
+		}break;
 
 		/*
 		 * Heartbeat cache update
 		 */
 		case CACHE_TYPE_HEARTBEAT:
-
+		{
 			/*
 			 * Get the cache
 			 */
-			heartbeat_cache_t* heart_cache = \
+			heart_cache = \
 				(heartbeat_cache_t*)system_t::BIOS_cache(CACHE_TYPE_HEARTBEAT);
 
 			/*
 			 * Format
 			 */
 			sprintf(
-					string_table[type],
+					string_table[type].string,
 					MQTT_HEARTBEAT_JSON,
 					time,
-
 					heart_cache->heartbeat_data.alive,
 					heart_cache->heartbeat_data.state
 					);
-			break;
+		}break;
 
 		/*
 		 * Status cache update
 		 */
 		case CACHE_TYPE_STATUS:
+		{
 
 			/*
 			 * Get the cache
 			 */
-			status_cache_t* status_cache = \
+			status_cache = \
 				(status_cache_t*)system_t::BIOS_cache(CACHE_TYPE_STATUS);
 
 			/*
 			 * Format
 			 */
 			sprintf(
-					string_table[type],
+					string_table[type].string,
 					MQTT_STATUS_JSON,
 					time,
 
@@ -219,7 +224,7 @@ msg_t* formatter::format(cache_t type){
 					status_cache->coms_data.ip_data.dns.string,
 					status_cache->coms_data.ip_data.subnet.string
 					);
-			break;
+		}break;
 
 		/*
 		 * No cache update
@@ -231,11 +236,9 @@ msg_t* formatter::format(cache_t type){
 	/*
 	 * Create the string
 	 */
-	string.data 	= string_table[type];
-	string.length 	= strlen(string_table[type]);
-	return &string;
-
-
+	msg->data 	= string_table[type].string;
+	msg->length 	= strlen(string_table[type].string);
+	return msg;
 }
 
 /**
@@ -254,11 +257,18 @@ char* formatter::convert_time(uint32_t time){
 	 * Temp containers
 	 */
 	char* string;
-	time_t _time = time;
+
+	int days, hours, minutes;
 
 	/*
 	 * Get the time
 	 */
-	ctime_r(_time, string);
+	days 			= time / (60 * 60 * 24);
+	time 			-= days * (60 * 60 * 24);
+	hours 			= time / (60 * 60);
+	time 			-= hours * (60 * 60);
+	minutes 		= time / 60;
+
+	sprintf(string, "%d:%d:%d", hours, minutes, time);
 	return string;
 }

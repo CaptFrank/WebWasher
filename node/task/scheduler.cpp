@@ -170,14 +170,14 @@ void scheduler::disable_tasks(){
 	/*
 	 * Temp
 	 */
-	task_t *current = first;
+	task *current = first;
 	int counter	= system_t::suspend_queue->count();
 
 	if (counter > 0){
 		/*
 		 * disable the tasks
 		 */
-		for(int i = 0; i < counter, i++){
+		for(int i = 0; i < counter; i++){
 
 			/*
 			 * Check the disable queue for disabling thread
@@ -223,7 +223,7 @@ void scheduler::run(){
 	/*
 	 * Temp
 	 */
-	task_t *current = first;
+	task *current = first;
 
 	/*
 	 * Until all tasks are ran
@@ -280,7 +280,7 @@ void scheduler::run(){
 					 * Update the time
 					 */
 					if (current->_iterations > 0){
-						current->iIterations--;  // do not decrement (-1) being a signal of eternal task
+						current->_iterations--;  // do not decrement (-1) being a signal of eternal task
 					}
 
 					/*

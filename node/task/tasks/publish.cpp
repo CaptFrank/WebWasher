@@ -5,7 +5,7 @@
  *      Author: fpapinea
  */
 
-#include <services/tasks/publish.h>
+#include <task/tasks/publish.h>
 
 /**
  * @brief The default constructor

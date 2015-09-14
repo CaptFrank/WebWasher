@@ -8,9 +8,16 @@
 #ifndef SERVICES_SYSTEM_SYSTEM_H_
 #define SERVICES_SYSTEM_SYSTEM_H_
 
-#include <task/task.h>
+#include <configs.h>
+#include <task/tasks.h>
 #include <status_codes.h>
-#include <platform/platform.h>
+#include <platform/others/caches.h>
+#include <platform/others/queue.h>
+#include <platform/sensor/sensor/sensor.h>
+#include <service/services/coms/coms.h>
+#include <service/services/formatter/formatter.h>
+
+#include <driverlib/prcm.h>
 
 /**
  * @brief Types of BIOS alarms
@@ -73,18 +80,6 @@ typedef enum {
 
 }sys_state_t;
 
-/**
- * Cache types
- */
-typedef enum {
-
-	CACHE_TYPE_HEARTBEAT,				//!< CACHE_TYPE_HEARTBEAT
-	CACHE_TYPE_STATUS,   				//!< CACHE_TYPE_STATUS
-	CACHE_TYPE_TEMP_DATA	= 0x0200,	//!< CACHE_TYPE_TEMP_DATA
-	CACHE_TYPE_ACC_DATA  	= 0x0001,	//!< CACHE_TYPE_ACC_DATA
-	CACHE_TYPE_ALL						//!< CACHE_TYPE_ALL
-}cache_t;
-
 /**< Data typedef */
 typedef void* data_t;
 
@@ -97,11 +92,12 @@ typedef void* cache_node_t;
  * @brief Callback to update the cache
  */
 typedef bool (*cache_callback_t)();
+typedef bool (sensor::*sensor_cache_cb_t)();
 
 /**
  * @brief The cache types
  */
-typedef struct {
+typedef struct cache_list_t{
 
 	cache_t				type;
 	msg_type_t			msg;
@@ -136,22 +132,22 @@ class system_srv {
 		/*
 		 * Suspending queue
 		 */
-		static queue_t<thread_id_t>* suspend_queue;
+		static queue<thread_id_t>* suspend_queue;
 
 		/*
 		 * Formatter
 		 */
-		static formatter_t format;
+		static formatter_t* format;
 
 		/*
 		 * Coms
 		 */
-		static coms_t coms;
+		static coms_t* coms;
 
 		/*
 		 * Sensors
 		 */
-		static sensor_t* sensors;
+		static sensor_t* sensors[NUMBER_OF_SENSORS + 1];
 
 		/*
 		 * TODO STATE, STATUS
@@ -160,12 +156,12 @@ class system_srv {
 		/*
 		 * The cache register
 		 */
-		cache_list_t* list;
+		static cache_list_t* list;
 
 		/*
 		 * Sequencer
 		 */
-		scheduler_t scheduler;
+		static scheduler_t* scheduler;
 
 	/*
 	 * Public method access
@@ -182,7 +178,7 @@ class system_srv {
 		 *
 		 * @param sensors	 	The sensors taht are in use
 		 */
-		static void BIOS_setup(sensor_t* sensors);
+		static void BIOS_setup(sensor_t* sensors[]);
 
 		/*
 		 * Testing
@@ -229,7 +225,7 @@ class system_srv {
 		 *
 		 * @param tasks			The tasks to boot and add to the execution pool.
 		 */
-		static void BIOS_boot(task_t* tasks);
+		static void BIOS_boot(task_t* tasks[]);
 
 		/**
 		 * @brief Runs the BIOS
@@ -273,17 +269,17 @@ class system_srv {
 		/*
 		 * State
 		 */
-		sys_state_t state;
+		static sys_state_t state;
 
 		/**
 		 * @brief Updates the heartbeat cache
 		 */
-		static void update_heartbeat_cache();
+		static bool update_heartbeat_cache();
 
 		/**
 		 * @brief Updates the status cache
 		 */
-		static void update_status_cache();
+		static bool update_status_cache();
 };
 
 /**< Typedef */

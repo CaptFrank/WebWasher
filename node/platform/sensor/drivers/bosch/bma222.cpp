@@ -15,45 +15,10 @@
  */
 bma222::bma222(bus_i2c_t* iface) : sensor_i2c(iface, BMA222_TRANSACTION_BYTE) {
 
-	/*
-	 * Set the tables
-	 */
-
-	/**
-	 * \brief Bosch BMA222 Range Table (milli-g, register value)
-	 */
-	range_table = {
-			{{ 2000}, BMA222_RANGE_2G		},
-			{{ 4000}, BMA222_RANGE_4G		},
-			{{ 8000}, BMA222_RANGE_8G		},
-			{{16000}, BMA222_RANGE_16G		}
-	};
-
-	/**
-	 * \brief Bosch BMA222 Bandwidth Table (hertz, register value)
-	 */
-	band_table	= {
-			{{   8}, BMA222_BANDWIDTH_8Hz  	}, /*    7.81 Hz */
-			{{  16}, BMA222_BANDWIDTH_16Hz 	}, /*   15.63 Hz */
-			{{  31}, BMA222_BANDWIDTH_31Hz 	}, /*   31.25 Hz */
-			{{  63}, BMA222_BANDWIDTH_63Hz 	}, /*   62.50 Hz */
-			{{ 125}, BMA222_BANDWIDTH_125Hz	}, /*  125.00 Hz */
-			{{ 250}, BMA222_BANDWIDTH_250Hz	}, /*  250.00 Hz */
-			{{ 500}, BMA222_BANDWIDTH_500Hz	}, /*  500.00 Hz */
-			{{1000}, BMA222_BANDWIDTH_1000Hz} /* 1000.00 Hz */
-	};
-
-	/**
-	 * \brief Sensor Event Callback Descriptors
-	 * (data=0, motion=1, low-g=2, high-g=3, tap=4)
-	 */
-	callbacks 	= {
-			{.handler = default_event_handler},
-			{.handler = default_event_handler},
-			{.handler = default_event_handler},
-			{.handler = default_event_handler},
-			{.handler = default_event_handler}
-	};
+	// Set the callbacks
+	for(int i = 0; i < BMA222_CALLBACKS; i++){
+		bma222::callbacks[i].handler = default_event_handler;
+	}
 
 	/*
 	 * Get the device id
@@ -75,13 +40,13 @@ bma222::bma222(bus_i2c_t* iface) : sensor_i2c(iface, BMA222_TRANSACTION_BYTE) {
 		/*
 		 * Set the driver function table and capabilities pointer.
 		 */
-		caps.feature			= 	SENSOR_CAPS_3_AXIS     |
-									SENSOR_CAPS_SELFTEST   |
-									SENSOR_CAPS_HI_G_EVENT |
-									SENSOR_CAPS_LO_G_EVENT |
-									SENSOR_CAPS_TAP_EVENT  |
-									SENSOR_CAPS_TILT_EVENT |
-									SENSOR_CAPS_AUX_TEMP,
+		caps.feature			= 	(sensor_feature_t) 	(SENSOR_CAPS_3_AXIS     |
+														SENSOR_CAPS_SELFTEST   |
+														SENSOR_CAPS_HI_G_EVENT |
+														SENSOR_CAPS_LO_G_EVENT |
+														SENSOR_CAPS_TAP_EVENT  |
+														SENSOR_CAPS_TILT_EVENT |
+														SENSOR_CAPS_AUX_TEMP);
 
 		caps.vendor				= 	SENSOR_VENDOR_BOSCH;
 		caps.range_table		= 	range_table;
@@ -89,8 +54,8 @@ bma222::bma222(bus_i2c_t* iface) : sensor_i2c(iface, BMA222_TRANSACTION_BYTE) {
 		caps.band_table			= 	band_table;
 		caps.band_count			= 	ARRAYSIZE(band_table);
 		caps.units				= 	SENSOR_UNITS_deg_Celcius;
-		caps.scale				= 	SENSOR_UNITS_g0;
-		caps.name				= 	"BMA222 Digital, triaxial acceleration sensor"
+		caps.scale				= 	SENSOR_SCALE_one;
+		caps.name				= 	"BMA222 Digital, triaxial acceleration sensor";
 
 		/*
 		 * Set the driver (device) default configurations and
@@ -109,22 +74,25 @@ bma222::bma222(bus_i2c_t* iface) : sensor_i2c(iface, BMA222_TRANSACTION_BYTE) {
 		/*
 		 * Set Sensor Type
 		 */
-		type					= (SENSOR_TYPE_ACCELEROMETER |
-								   SENSOR_TYPE_TEMPERATURE);
-
-		/*
-		 * Set the cache
-		 */
-		cache 					= &datacache;
+		type					= (sensor_type_t) (SENSOR_TYPE_ACCELEROMETER |
+								   	   	   	   	   SENSOR_TYPE_TEMPERATURE);
 
 		/*
 		 * Set the message type
 		 */
 		msg 					= MSG_TYPE_ACC_DATA;
 
+		/*
+		 * Set cache type
+		 */
+		cache_type				= CACHE_TYPE_ACC_DATA;
+
 		/* Check bus status and return true if ok */
-		if ((STATUS_OK == bus->get_status()) &&
-				irq_connect(BMA222_INT_PIN, CHANGE, bma222_t::isr)){ // Register the isr
+		if ((STATUS_OK == bus->get_status())
+#ifdef BMA222_IRQ
+				&& irq_connect(BMA222_INT_PIN, CHANGE, bma222_t::isr)
+#endif
+		){ // Register the isr
 			/*
 			 * No Errors
 			 */
@@ -175,7 +143,7 @@ bool bma222::update(){
 	 */
 	rc |= set_state(SENSOR_STATE_SLEEP);
 
-	return (rc)
+	return (rc);
 }
 
 /**
@@ -212,13 +180,13 @@ bool bma222::read(sensor_read_t type){
 
 	switch (type) {
 	case SENSOR_READ_ACCELERATION:
-		return get_acc(data);
+		return get_acc();
 
 	case SENSOR_READ_TEMPERATURE:
-		return get_temp(data);
+		return get_temp();
 
 	case SENSOR_READ_ID:
-		return get_device_id(data);
+		return get_device_id();
 
 	default:
 		err = SENSOR_ERR_FUNCTION;
@@ -257,7 +225,8 @@ bool bma222::reset(int arg){
  * \return  bool    true if the call succeeds, else false is returned.
  */
 bool bma222::sleep(int arg){
-	return sleep_en(true);
+	sleep_en(true);
+	return true;
 }
 
 /**
@@ -315,7 +284,6 @@ bool bma222::ioctl(sensor_command_t cmd, void *arg){
 		}else {
 			return true;
 		}
-	}
 	case SENSOR_READ_SCALAR:
 		if(!get_temp()){
 			err = SENSOR_ERR_DRIVER;
@@ -323,6 +291,7 @@ bool bma222::ioctl(sensor_command_t cmd, void *arg){
 		}else {
 			return true;
 		}
+	}
 }
 
 /**
@@ -519,8 +488,8 @@ bool bma222::get_device_id(){
 	if(sizeof(bma222_id_regs_t) != bus->read(
 				BMA222_I2C_ADDR,				// Destination
 				sizeof(bma222_id_regs_t),		// Size to read
-				BMA222_CHIP_ID,					// Memory index to read from
-				&id								// Where to store the value
+				(uint8_t)BMA222_CHIP_ID,		// Memory index to read from
+				(uint8_t*)&id					// Where to store the value
 			)){
 
 		/*
@@ -557,8 +526,8 @@ bool bma222::get_temp(){
 	if(sizeof(int8_t) != bus->read(
 				BMA222_I2C_ADDR,				// Destination
 				sizeof(int8_t),					// Size to read
-				BMA222_TEMP,					// Memory index to read from
-				&temp_data						// Where to store the value
+				(uint8_t)BMA222_TEMP,			// Memory index to read from
+				(uint8_t*)&temp_data			// Where to store the value
 			)){
 
 		/*
@@ -598,11 +567,11 @@ bool bma222::get_acc(){
 	/*
 	 * Get the device id
 	 */
-	if(sizeof(int8_t) != bus->read(
+	if(sizeof(uint8_t) != bus->read(
 				BMA222_I2C_ADDR,				// Destination
 				sizeof(regs.acc),				// Size to read
 				hal.burst_addr,					// Memory index to read from
-				&regs.acc)						// Where to store the value
+				(uint8_t*)&regs.acc				// Where to store the value
 			)){
 
 		/*
@@ -615,7 +584,7 @@ bool bma222::get_acc(){
 	/*
 	 * Convert
 	 */
-	memcpy(cache.acc.acc.axis, regs.acc, sizeof(regs.acc));
+	memcpy((void*)&cache.acc.acc.axis, (void*)&regs.acc, sizeof(regs.acc));
 
 	/*
 	 * Return the bus status
@@ -639,7 +608,7 @@ void bma222::sleep_en(bool sleep){
 
 	uint8_t const power_mode_val = (sleep == true)
 			? (BMA222_LOWPOWER_EN | BMA222_SLEEP_DUR_1ms) : 0;
-	bus->put(BMA222_I2C_ADDR, BMA222_POWER_MODES, &power_mode_val);
+	bus->put(BMA222_I2C_ADDR, BMA222_POWER_MODES, power_mode_val);
 }
 
 /**
@@ -736,7 +705,7 @@ bool bma222::set_threshold(sensor_threshold_desc_t *threshold){
 			break;
 		}
 
-		return (STATUS_OK == hal->bus.status);
+		return (STATUS_OK == bus->get_status());
 }
 
 /**
@@ -771,7 +740,7 @@ bool bma222::get_threshold(sensor_threshold_desc_t *threshold){
 		break;
 
 	case SENSOR_THRESHOLD_HIGH_G:
-		threshold->value = raw_to_scaled(BMA222_I2C_ADDR,
+		threshold->value = raw_to_scaled(this,
 				bus->get(BMA222_I2C_ADDR, BMA222_HIGH_G_THRESHOLD));
 		break;
 	}
@@ -801,7 +770,7 @@ bool bma222::set_tap(sensor_tap_params_t *params){
  * @return bool         true if the call succeeds, else false is returned
  */
 bool bma222::event(sensor_event_t sensor_event,
-		sensor_event_callback_t *callback, xdc_Bool enable){
+		sensor_event_callback_t* callback, bool enable){
 
 		bool status = false;
 
@@ -889,8 +858,8 @@ bool bma222::event(sensor_event_t sensor_event,
 			status = true;
 		}
 
-		sensor_bus_put(hal, BMA222_16_INTR_EN, int_enable1);
-		sensor_bus_put(hal, BMA222_17_INTR_EN, int_enable2);
+		bus->put(BMA222_I2C_ADDR, BMA222_16_INTR_EN, int_enable1);
+		bus->put(BMA222_I2C_ADDR, BMA222_17_INTR_EN, int_enable2);
 
 		return status;
 }
@@ -923,7 +892,15 @@ bool bma222::event(sensor_event_t sensor_event,
  * @param arg       The default args
  * @return Nothing.
  */
-static void bma222::isr(void* sensor, void *arg){
+void bma222::isr(void* sensor, void *arg){
+#ifdef BMA222_IRQ
+
+	/*
+	 * NOTE !!! This code has not been updated and may pose issues
+	 * in the compile process...
+	 *
+	 */
+
 
 	/*
 	 * Convert sensor
@@ -933,7 +910,10 @@ static void bma222::isr(void* sensor, void *arg){
 	/*
 	 * Read what event has happened
 	 */
-	bus->read(hal.burst_addr, &regs, sizeof(bma222_event_regs_t));
+	bus->read(	BMA222_I2C_ADDR,
+				sizeof(bma222_event_regs_t),
+				hal.burst_addr,
+				(uint8_t*)&regs);
 
 	/*
 	 * If the bus is in a good state we know the transaction was
@@ -973,8 +953,9 @@ static void bma222::isr(void* sensor, void *arg){
 		}
 
 		if (bma222->regs.status_field.d_tap_int) {
-			bma222->evt_data.event |= SENSOR_EVENT_D_TAP;
+			bma222->evt_data.event |= (sensor_event_t)SENSOR_EVENT_D_TAP;
 			(callbacks[4].handler)(&bma222->evt_data, callbacks[4].arg);
 		}
 	}
+#endif
 }

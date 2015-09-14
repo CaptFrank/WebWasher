@@ -19,6 +19,7 @@
  */
 #include <platform/platform.h>
 #include <service/services.h>
+#include <platform/sensor/sensor/sensor.h>
 
 /*
  * Local task defines
@@ -34,7 +35,7 @@
  * The daq task is the task that gets all the sensor
  * data from the onboard sensors.
  */
-class daq : protected task_t {
+class daq : public task_t {
 
 	/*
 	 * Public access methods
@@ -49,7 +50,7 @@ class daq : protected task_t {
 		 *
 		 * @param sensors		The sensor interfaces
 		 */
-		daq(sensor_t* sensors);
+		daq(sensor_t* sensors[]);
 
 		/**
 		 * @brief The default deconstructor

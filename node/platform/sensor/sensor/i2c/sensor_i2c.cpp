@@ -13,11 +13,12 @@
  * @param resolution		The resolution of th transaction
  * @param bus				The sensor bus
  */
-sensor_i2c::sensor_i2c(bus_i2c_t* iface, uint8_t resolution): sensor(), bus_i2c() {
+sensor_i2c::sensor_i2c(bus_i2c_t* iface, uint8_t resolution): sensor() {
 
 	/*
 	 * Set internals
 	 */
+
 	bus 		= iface;
 	set_resolution(resolution);
 }
