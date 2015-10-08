@@ -31,13 +31,11 @@ Imports
 =============================================
 """
 
-from queue import Queue
-from threading import Thread
-
 from WebWasherServer.config import *
-from WebWasherServer.Storage.Redis import RedisStorage
-from WebWasherServer.Server.Server import Server
 from paho.mqtt.client import Client
+
+from WebWasherServer.Server.Server import Server
+
 
 """
 =============================================
@@ -63,22 +61,13 @@ DEAD                            = MQTT_SERVER_CONNECTION_DEAD
 
 """
 =============================================
-Global MQTT queue reference
-=============================================
-"""
-
-__queue                          = Queue()
-
-"""
-=============================================
 Source
 =============================================
 """
 
 class MqttServer(
     Client,
-    Server,
-    Thread
+    Server
 ):
     """
     This is the base class for the MQTT client. We use this class object
@@ -102,6 +91,12 @@ class MqttServer(
 
     # Thread alive
     _alive      = True
+
+    # Queue reference
+    queue       = None
+
+    # The data queue reference
+    data        = None
 
     def __init__(self, name=None, config=None):
         """
@@ -134,14 +129,11 @@ class MqttServer(
 
         # Override the base classes
         Client.__init__(self, name)
-        Server.__init__(self, MQTT_TYPE, RedisStorage())
-        Thread.__init__(self)
-
-        print("[+] Set the queue reference hook.")
-        global __queue
-        __queue = self._storage
+        Server.__init__(self, MQTT_TYPE)
 
         self._set_state(MQTT_SERVER_STATE_INIT)
+        self.data = self.get_q("RX")
+
         print("[+] Created a new MQTTServer object.")
         return
 
@@ -223,7 +215,7 @@ class MqttServer(
                 if item:
 
                     # Put the entry in the redis Queue
-                    self._storage.append(self._type, item['message'])
+                    self.data.set(item['message'])
 
             return
 
@@ -275,16 +267,16 @@ class MqttServer(
         return
 
     @staticmethod
-    def _on_message(client, userdata, message):
+    def _on_message(client, userdata, message, cls):
         """
         This method is invoked when there is a new message in the
         receive buffer.
         """
 
         # We add the message to the message queue.
-        global __queue
-        if __queue:
-            __queue.put(
+        queue = cls.get_q()
+        if queue:
+            queue.put(
                 {
                     "type"      : MQTT_TYPE,
                     "data"      : {
@@ -414,3 +406,24 @@ class MqttServer(
 
     # The private access property
     __cxn = property(_get_cxn_status, _set_cxn_status)
+
+    # ==============
+    # Queue
+    # ==============
+
+    """
+    The following Methods correspond to the internal queue property
+    of the class. We use these properties as a control to the MQTT server.
+    It serves as a blocking mechanism when there is a set process required before
+    another.
+    """
+
+    def _set_q(self, q):
+        self.queue = q
+        return
+
+    def _get_q(self):
+        return self.queue
+
+    # The private access property
+    __queue = property(_get_q, _set_q)
