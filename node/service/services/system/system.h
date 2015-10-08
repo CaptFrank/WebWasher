@@ -9,76 +9,14 @@
 #define SERVICES_SYSTEM_SYSTEM_H_
 
 #include <configs.h>
-#include <task/tasks.h>
 #include <status_codes.h>
+#include <task/scheduler.h>
 #include <platform/others/caches.h>
 #include <platform/others/queue.h>
 #include <platform/sensor/sensor/sensor.h>
-#include <service/services/coms/coms.h>
-#include <service/services/formatter/formatter.h>
 
 #include <driverlib/prcm.h>
 
-/**
- * @brief Types of BIOS alarms
- */
-typedef enum {
-
-	BIOS_ALERT_REBOOT,         			//!< BIOS_ALERT_REBOOT
-	BIOS_ALERT_COMS_FAIL,      			//!< BIOS_ALERT_COMS_FAIL
-	BIOS_ALERT_SENSOR_FAIL,    			//!< BIOS_ALERT_SENSOR_FAIL
-	BIOS_ALERT_SYSTEM_FAIL,    			//!< BIOS_ALERT_SYSTEM_FAIL
-	BIOS_ALERT_PROCESSING_FAIL,			//!< BIOS_ALERT_PROCESSING_FAIL
-	BIOS_ALERT_REGISTER_FAIL,			//!< BIOS_ALERT_REGISTER_FAIL
-	BIOS_ALERT_UPDATE_FAIL,				//!< BIOS_ALERT_UPDATE_FAIL
-	BIOS_ALERT_SCHEDULER_FAIL,			//!< BIOS_ALERT_SCHEDULER_FAIL
-	BIOS_ALERT_TASK_FAIL				//!< BIOS_ALERT_TASK_FAIL
-}bios_alerts_t;
-
-/**
- * Types of reboot requests
- */
-typedef enum {
-
-	/*
-	 * Services
-	 *
-	 * 	- System BIOS services
-	 * 	- Communication services
-	 */
-	BIOS_REBOOT_SYS_SOFT,				//!< BIOS_REBOOT_SYS_SOFT
-	BIOS_REBOOT_SYS_HARD,				//!< BIOS_REBOOT_SYS_HARD
-	BIOS_REBOOT_COMS,   				//!< BIOS_REBOOT_COMS
-
-	/*
-	 * Interfaces
-	 *
-	 * 	- MQTT Interface
-	 * 	- WIFI Interface
-	 * 	- Sensor Interface
-	 * 		- I2C
-	 * 		- SPI
-	 */
-	BIOS_REBOOT_MQTT,    				//!< BIOS_REBOOT_MQTT
-	BIOS_REBOOT_WIFI,    				//!< BIOS_REBOOT_WIFI
-
-	/*
-	 * OS
-	 */
-	BIOS_REBOOT_OS,       				//!< BIOS_REBOOT_OS
-	BIOS_REBOOT_SCHEDULER,				//!< BIOS_REBOOT_SCHEDULER
-	BIOS_REBOOT_TASK,					//!< BIOS_REBOOT_TASK
-}bios_reboot_t;
-
-typedef enum {
-
-	SYS_STATE_IDLE,
-	SYS_STATE_SLEEP,
-	SYS_STATE_ACTIVE,
-	SYS_STATE_REBOOT,
-	SYS_STATE_ERROR,
-
-}sys_state_t;
 
 /**< Data typedef */
 typedef void* data_t;
@@ -92,7 +30,12 @@ typedef void* cache_node_t;
  * @brief Callback to update the cache
  */
 typedef bool (*cache_callback_t)();
-typedef bool (sensor::*sensor_cache_cb_t)();
+typedef bool (*sensor_cache_cb_t)(sensor*);
+
+typedef union {
+	cache_callback_t 	f_ptr;
+	sensor_cache_cb_t 	m_ptr;
+}cb;
 
 /**
  * @brief The cache types
@@ -102,9 +45,10 @@ typedef struct cache_list_t{
 	cache_t				type;
 	msg_type_t			msg;
 	cache_node_t 		node;
-	cache_callback_t	fxn;
+	cb					fxn;
 	cache_list_t* 		next;
 	cache_list_t* 		prev;
+	sensor_t* 			sensor;
 }cache_list_t;
 
 /**
@@ -135,23 +79,9 @@ class system_srv {
 		static queue<thread_id_t>* suspend_queue;
 
 		/*
-		 * Formatter
-		 */
-		static formatter_t* format;
-
-		/*
-		 * Coms
-		 */
-		static coms_t* coms;
-
-		/*
 		 * Sensors
 		 */
 		static sensor_t* sensors[NUMBER_OF_SENSORS + 1];
-
-		/*
-		 * TODO STATE, STATUS
-		 */
 
 		/*
 		 * The cache register

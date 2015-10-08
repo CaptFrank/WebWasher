@@ -109,7 +109,7 @@ mqtt_status_t mqtt::connect(mqtt_broker_t address, mqtt_port_t port){
     		MQTTPacket_connectData_initializer;
 
     options.MQTTVersion 			= MQTT_VERSION;
-    options.clientID.cstring 		= MQTT_SENSOR_ID;
+    options.clientID.cstring 		= MQTT_SENSOR_ID_STR;
     options.username.cstring 		= MQTT_USERNAME;
     options.password.cstring 		= MQTT_PASSWORD;
     options.keepAliveInterval 		= MQTT_KEEP_ALIVE;

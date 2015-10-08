@@ -578,9 +578,10 @@ class sensor {
 		 * updates the internal caches that are mapped to the internal system BIOS.
 		 * We do this to obtain a transparency between the BIOS and the sensor.
 		 *
+		 * @param	sensor	Sensor class object pointer
 		 * @return	bool 	true of the update was successful.
 		 */
-		virtual bool update();
+		static bool update(sensor* sensor);
 
 		/**
 		 * Returns object address.
@@ -588,6 +589,11 @@ class sensor {
 		void* get_address(){
 			return this;
 		}
+
+		/**
+		 * @brief Virtual method to run the update
+		 */
+		virtual bool run();
 
 
 	/*

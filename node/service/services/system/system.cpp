@@ -6,7 +6,7 @@
  */
 
 #include <service/services/system/system.h>
-
+#include <service/services/coms/coms.h>
 /**
  * @brief The default constructor for the class.
  *
@@ -20,30 +20,26 @@
 void system_srv::BIOS_setup(sensor_t* sensors[]){
 
 	/*
-	 * Create the inclass queue on the heap
-	 */
-	system_t::suspend_queue = \
-			new queue<thread_id_t>();
-
-	/*
 	 * Setup the heartbeat cache
 	 */
-	system_t::heartbeat_cache.fxn 	= system_t::update_heartbeat_cache;
-	system_t::heartbeat_cache.node	= &system_t::heart;
-	system_t::heartbeat_cache.type 	= CACHE_TYPE_HEARTBEAT;
-	system_t::heartbeat_cache.msg	= MSG_TYPE_HEARTBEAT;
-	system_t::heartbeat_cache.next	= &system_t::status_cache;
-	system_t::heartbeat_cache.prev	= NULL;
+	system_t::heartbeat_cache.fxn.f_ptr 	= system_t::update_heartbeat_cache;
+	system_t::heartbeat_cache.node			= &system_t::heart;
+	system_t::heartbeat_cache.type 			= CACHE_TYPE_HEARTBEAT;
+	system_t::heartbeat_cache.msg			= MSG_TYPE_HEARTBEAT;
+	system_t::heartbeat_cache.next			= &system_t::status_cache;
+	system_t::heartbeat_cache.prev			= NULL;
+	system_t::heartbeat_cache.sensor		= NULL; 	// No sensor
 
 	/*
 	 * Setup the status cache
 	 */
-	system_t::status_cache.fxn 		= system_t::update_status_cache;
-	system_t::status_cache.node		= &system_t::status;
-	system_t::status_cache.type 	= CACHE_TYPE_STATUS;
-	system_t::status_cache.msg		= MSG_TYPE_STATUS;
-	system_t::status_cache.next		= NULL;
-	system_t::status_cache.prev		= &system_t::heartbeat_cache;
+	system_t::status_cache.fxn.f_ptr 		= system_t::update_status_cache;
+	system_t::status_cache.node				= &system_t::status;
+	system_t::status_cache.type 			= CACHE_TYPE_STATUS;
+	system_t::status_cache.msg				= MSG_TYPE_STATUS;
+	system_t::status_cache.next				= NULL;
+	system_t::status_cache.prev				= &system_t::heartbeat_cache;
+	system_t::status_cache.sensor			= NULL; 	// No sensor
 
 	/*
 	 * Create the list
@@ -51,15 +47,10 @@ void system_srv::BIOS_setup(sensor_t* sensors[]){
 	list = &heartbeat_cache;
 
 	/*
-	 * Create the formatter
+	 * Boot the scheduler
 	 */
-	system_t::format = new formatter_t();
-
-	/*
-	 * Create the coms
-	 */
-	system_t::coms = new coms_t();
-	system_t::coms->connect(INTERFACE_BOTH);
+	system_t::scheduler = new scheduler_t();
+	suspend_queue = system_t::scheduler->suspend_queue;
 
 	/*
 	 * Add the sensors
@@ -79,6 +70,11 @@ void system_srv::BIOS_setup(sensor_t* sensors[]){
 void system_srv::BIOS_reboot(bios_reboot_t type){
 
 	/*
+	 * Iface
+	 */
+	extern coms_t* coms;
+
+	/*
 	 * Update the state
 	 */
 	state = SYS_STATE_REBOOT;
@@ -95,14 +91,14 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 		/*
 		 * Delete the current coms and re init it.
 		 */
-		system_t::coms->disconnect(INTERFACE_BOTH);
-		delete system_t::coms;
+		coms->disconnect(INTERFACE_BOTH);
+		delete coms;
 
 		/*
 		 * Reconnect
 		 */
-		system_t::coms = new coms_t();
-		system_t::coms->connect(INTERFACE_BOTH);
+		coms = new coms_t();
+		coms->connect(INTERFACE_BOTH);
 		break;
 
 	case BIOS_REBOOT_MQTT:
@@ -110,15 +106,15 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 		/*
 		 * Reboot the mqtt interface
 		 */
-		system_t::coms->mqtt_if->disconnect();
-		delete system_t::coms->mqtt_if;
+		coms->mqtt_if->disconnect();
+		delete coms->mqtt_if;
 
 		/*
 		 * Rebuild the interface
 		 */
-		system_t::coms->mqtt_if = \
-				new mqtt_t(system_t::coms->ip_stack);
-		system_t::coms->connect(INTERFACE_MQTT);
+		coms->mqtt_if = \
+				new mqtt_t(coms->ip_stack);
+		coms->connect(INTERFACE_MQTT);
 		break;
 
 	case BIOS_REBOOT_WIFI:
@@ -126,16 +122,16 @@ void system_srv::BIOS_reboot(bios_reboot_t type){
 		/*
 		 * Reboot the wifi engine
 		 */
-		system_t::coms->wifi_if->disconnect();
-		delete system_t::coms->wifi_if;
+		coms->wifi_if->disconnect();
+		delete coms->wifi_if;
 
 		/*
 		 * Rebuild the interface
 		 */
-		system_t::coms->wifi_if = 					\
-				new wifi_t(system_t::coms->ip_stack, \
-						   &system_t::coms->wifi_attr);
-		system_t::coms->wifi_if->connect(WIFI_SSID, WIFI_PASS);
+		coms->wifi_if = 					\
+				new wifi_t(coms->ip_stack, \
+						   &coms->wifi_attr);
+		coms->wifi_if->connect(WIFI_SSID, WIFI_PASS);
 		break;
 
 	case BIOS_REBOOT_OS:
@@ -266,18 +262,17 @@ void system_srv::BIOS_register(sensor_t* sensor){
 		temp = temp->next;
 	}
 
-	// Get function pointer
-	sensor_cache_cb_t cb =
 	/*
 	 * Add the cache to the list
 	 */
-	entry->node = sensor->cache;
-	entry->msg  = sensor->msg;
-	entry->next = NULL;
-	entry->fxn  = cb;
-	entry->prev = temp;
-	entry->type = (cache_t)sensor->cache_type;
-	temp->next = entry;
+	entry->node 		= sensor->cache;
+	entry->msg  		= sensor->msg;
+	entry->next 		= NULL;
+	entry->fxn.m_ptr  	= sensor::update;
+	entry->prev 		= temp;
+	entry->type 		= (cache_t)sensor->cache_type;
+	entry->sensor		= sensor;
+	temp->next 			= entry;
 }
 
 /**
@@ -304,7 +299,22 @@ void system_srv::BIOS_update(cache_t type = CACHE_TYPE_ALL){
 			/*
 			 * Update
 			 */
-			if (temp->fxn()){
+			if((temp->type != CACHE_TYPE_HEARTBEAT) ||
+					(temp->type != CACHE_TYPE_STATUS)){
+
+
+				/*
+				 * We need to update the caches that require a sensor handle
+				 */
+				temp->fxn.m_ptr(temp->sensor);
+				temp = temp->next;
+				rc = true;
+
+			}else if (temp->fxn.f_ptr()){
+
+				/*
+				 * OS caches that do not need sensor handle
+				 */
 				temp = temp->next;
 				rc = true;
 			}
@@ -318,7 +328,22 @@ void system_srv::BIOS_update(cache_t type = CACHE_TYPE_ALL){
 			/*
 			 * Look for the type to update
 			 */
-			rc = (system_t::BIOS_cache(type))->fxn();
+			if((type != CACHE_TYPE_HEARTBEAT) ||
+					(type != CACHE_TYPE_STATUS)){
+
+				/*
+				 * We need to update the caches that require a sensor handle
+				 */
+				temp = (system_t::BIOS_cache(type));
+				rc = temp->fxn.m_ptr(temp->sensor);
+
+			}else{
+
+				/*
+				 * OS caches that do not need sensor handle
+				 */
+				rc = (system_t::BIOS_cache(type))->fxn.f_ptr();
+			}
 		}
 
 		/*
@@ -366,6 +391,7 @@ void system_srv::BIOS_run(){
 	 * We run the scheduled tasks
 	 */
 	NOTIFY_INFO("Running the scheduler.");
+	BIOS_state(SYS_STATE_ACTIVE);
 	system_t::scheduler->run();
 }
 
@@ -470,6 +496,11 @@ bool system_srv::update_heartbeat_cache(){
 bool system_srv::update_status_cache(){
 
 	/*
+	 * Iface
+	 */
+	extern coms_t* coms;
+
+	/*
 	 * Update the device states
 	 */
 	if((state != SYS_STATE_REBOOT) ||
@@ -486,9 +517,9 @@ bool system_srv::update_status_cache(){
 	 * Update the iface status
 	 */
 	system_t::status.coms_data.ip_data.status = \
-			system_t::coms->wifi_if->get_status();
+			coms->wifi_if->get_status();
 	system_t::status.coms_data.mqtt_data.status = \
-			system_t::coms->mqtt_if->get_status();
+			coms->mqtt_if->get_status();
 
 	return true;
 }

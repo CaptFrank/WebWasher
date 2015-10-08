@@ -33,10 +33,10 @@ typedef struct {
 	char*				drv_ver;
 
 	// Basic IP attributes
-	IPAddress 			ip;
-	IPAddress 			dns;
-	IPAddress 			gateway;
-	IPAddress 			subnet;
+	IPAddress* 			ip;
+	IPAddress* 			dns;
+	IPAddress* 			gateway;
+	IPAddress* 			subnet;
 
 	// Wifi handle
 	WiFiClass*			handle;

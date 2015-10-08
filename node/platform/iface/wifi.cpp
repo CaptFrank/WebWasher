@@ -34,10 +34,10 @@ wifi::wifi(WifiIPStack* stack, wifi_attributes_t* settings){
 	 * We set the configs
 	 */
 	attr->handle->config(
-			settings->ip,
-			settings->dns,
-			settings->gateway,
-			settings->subnet);
+			*settings->ip,
+			*settings->dns,
+			*settings->gateway,
+			*settings->subnet);
 
 	/*
 	 * Set the internals

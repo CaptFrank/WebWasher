@@ -13,7 +13,7 @@
  */
 #include "task.h"
 #include <status_codes.h>
-#include <service/services.h>
+#include <platform/others/queue.h>
 
 /**
  * @brief The scheduler interface
@@ -44,6 +44,11 @@ class scheduler {
 	 * Public access methods
 	 */
 	public:
+
+		/*
+		 * Suspending queue
+		 */
+		static queue<thread_id_t>* suspend_queue;
 
 		/**
 		 * @brief The default object constructor.

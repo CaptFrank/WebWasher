@@ -11,7 +11,6 @@
 #include <time.h>
 #include <configs.h>
 #include <platform/platform.h>
-#include <service/services/coms/coms.h>
 #include <service/services/system/system.h>
 
 #include "strings.h"

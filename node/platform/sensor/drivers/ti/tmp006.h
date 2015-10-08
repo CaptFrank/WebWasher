@@ -204,7 +204,7 @@ class tmp006: public sensor_i2c_t {
 		 *
 		 * @return	bool 	true of the update was successful.
 		 */
-		bool update();
+		bool run();
 
 		/**
 		 * \brief Read sensor data

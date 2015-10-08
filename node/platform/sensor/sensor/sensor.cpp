@@ -97,3 +97,21 @@ uint32_t sensor::timestamp(void){
 	return millis();
 }
 
+/**
+ * \brief Updates the internal cache of the sensor.
+ *
+ * In this function, the system reads the newest data from the sensor and
+ * updates the internal caches that are mapped to the internal system BIOS.
+ * We do this to obtain a transparency between the BIOS and the sensor.
+ *
+ * @param	sensor	Sensor class object pointer
+ * @return	bool 	true of the update was successful.
+ */
+bool sensor::update(sensor_t* sensor){
+
+	/*
+	 * Update the sensor
+	 */
+	return sensor->run();
+}
+

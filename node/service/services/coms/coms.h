@@ -9,12 +9,16 @@
 #define SERVICE_SERVICES_COMS_H_
 
 #include <string.h>
-#include <configs.h>
-#include <status_codes.h>
 #include <Countdown.h>
 #include <MQTTClient.h>
+#include <status_codes.h>
 
-#include <platform/platform.h>
+#include <task/task.h>
+#include <platform/iface/mqtt.h>
+#include <platform/iface/wifi.h>
+
+#include <service/services/formatter/formatter.h>
+#include <service/services/system/system.h>
 
 /*
  * Local Defines

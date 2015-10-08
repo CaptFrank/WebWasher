@@ -9,9 +9,10 @@
 #define SERVICES_COMMS_MQTT_H_
 
 #include <configs.h>
-#include <service/services.h>
 #include <status_codes.h>
 
+#include <Wifi.h>
+#include <WifiIPStack.h>
 #include <Countdown.h>
 #include <MQTTClient.h>
 
@@ -61,12 +62,6 @@ class mqtt {
 		WifiIPStack* 					stack_if;
 
 		/*
-		 * The MQTT client interface
-		 */
-		MQTT::Client <WifiIPStack, Countdown, MQTT_MAX_PACKET_SIZE>* \
-										client_if;
-
-		/*
 		 * The class status
 		 */
 		status_code_t 					status;
@@ -75,6 +70,12 @@ class mqtt {
 	 * Public access methods
 	 */
 	public:
+
+		/*
+		 * The MQTT client interface
+		 */
+		MQTT::Client <WifiIPStack, Countdown, MQTT_MAX_PACKET_SIZE>* \
+										client_if;
 
 		/**
 		 * @brief The MQTT Interface Constructor

@@ -40,10 +40,10 @@ coms_svr::coms_svr(){
 	 */
 	wifi_attr.handle 	= new WiFiClass();
 
-	wifi_attr.ip = new IPAddress((uint8_t*)&WIFI_LOCAL_IP);
-	wifi_attr.dns = new IPAddress((uint8_t*)&WIFI_LOCAL_DNS);
-	wifi_attr.gateway = new IPAddress((uint8_t*)&WIFI_LOCAL_GATEWAY);
-	&wifi_attr.subnet = new IPAddress((uint8_t*)&WIFI_LOCAL_SUBNET);
+	wifi_attr.ip = new IPAddress((uint8_t*)WIFI_LOCAL_IP);
+	wifi_attr.dns = new IPAddress((uint8_t*)WIFI_LOCAL_DNS);
+	wifi_attr.gateway = new IPAddress((uint8_t*)WIFI_LOCAL_GATEWAY);
+	wifi_attr.subnet = new IPAddress((uint8_t*)WIFI_LOCAL_SUBNET);
 
 	/*
 	 * Create the ip stack handle
@@ -96,7 +96,7 @@ status_code_t coms_svr::connect(interface_t iface){
 				 * Subscribe to the topics of interest
 				 */
 				if(MQTT_SUCCESS_STATUS != \
-						mqtt_if->subscribe(MQTT_SUB_TOPIC_1, coms_t::coms_callback)){
+						mqtt_if->subscribe(MQTT_SUB_TOPIC_1, coms_svr::coms_callback)){
 
 					/*
 					 * Problem
@@ -104,7 +104,7 @@ status_code_t coms_svr::connect(interface_t iface){
 					goto MQTT_ERROR;
 				}
 				if(MQTT_SUCCESS_STATUS != \
-						mqtt_if->subscribe(MQTT_SUB_TOPIC_2, coms_t::coms_callback)){
+						mqtt_if->subscribe(MQTT_SUB_TOPIC_2, coms_svr::coms_callback)){
 
 					/*
 					 * Problem
@@ -349,7 +349,7 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
 		case COMMAND_TYPE_DISCONNECT:
 		{
 			if(msg->length > 1) return ERR_BAD_FORMAT;
-			rc = disconnect((interface_t)*packet);
+			rc = this->disconnect((interface_t)*packet);
 			free(packet);
 			break;
 		};
@@ -458,6 +458,9 @@ status_code_t coms_svr::process(command_t command, msg_t* msg){
  */
 void coms_svr::coms_callback(MQTT::MessageData& md){
 
+	// Iface
+	extern coms_t* coms;
+
 	// Return code
 	status_code_t rc;
 
@@ -511,11 +514,9 @@ void coms_svr::coms_callback(MQTT::MessageData& md){
 			/*
 			 * Process that type of message
 			 */
-			// Get coms reference
-			coms_svr* com = system_t::coms;
 
 			// Process the command
-			if((rc = com->process(commands[i].type, &packet)) != STATUS_OK){
+			if((rc = coms->process(commands[i].type, &packet)) != STATUS_OK){
 
 				/*
 				 * Check for bad format
@@ -529,7 +530,7 @@ void coms_svr::coms_callback(MQTT::MessageData& md){
 					/*
 					 * Send bad format packet to the mqtt broker
 					 */
-					com->send(MSG_TYPE_STATUS, &msg);
+					coms->send(MSG_TYPE_STATUS, &msg);
 					return;
 				}
 

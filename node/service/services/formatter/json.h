@@ -56,7 +56,6 @@
 											"}, "						\
 											"coms:{"					\
 												"mqtt:{"				\
-													"status:%d,"		\
 													"broker:%s,"		\
 													"port:%d,"			\
 													"ver:%d,"			\
@@ -74,7 +73,6 @@
 													"},"				\
 												"},"					\
 												"ip:{"					\
-													"status:%d,"		\
 													"socket:%d,"		\
 													"ip:%s,"			\
 													"timeout:%d,"		\

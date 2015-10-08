@@ -37,6 +37,17 @@ sensor_t* sensors[NUMBER_OF_SENSORS + 1]	= {
 		NULL
 };
 
+
+/*
+ * Formatter
+ */
+static formatter_t* format = new formatter_t();
+
+/*
+ * Coms
+ */
+static coms_t* coms = new coms_t();
+
 /*
  * Task list
  */
@@ -51,7 +62,7 @@ static task_t* tasks[TASK_NUMBER] 	= {
 		 * Thread Id 	= 1
 		 * Interval 	= 100ms
 		 */
-		new daq_t		(&system_t::sensors /*	*/),
+		new daq_t		(sensors /*              */),
 #endif
 
 #ifdef UPDATE_TASK_ENABLE
@@ -75,7 +86,7 @@ static task_t* tasks[TASK_NUMBER] 	= {
 		 * Thread Id 	= 3
 		 * Interval 	= 500ms + 1sec sleep
 		 */
-		new publish_t	(system_t::coms /*		*/),
+		new publish_t	(/*  NULL         		*/),
 #endif
 
 #ifdef IDLE_TASK_ENABLE
@@ -88,7 +99,7 @@ static task_t* tasks[TASK_NUMBER] 	= {
 		 * Thread Id 	= 0
 		 * Interval 	= 500ms
 		 */
-		new idle_t		(system_t::coms /*		*/),
+		new idle_t		(/*  NULL         		*/),
 #endif
 };
 
@@ -111,6 +122,7 @@ void setup() {
 	 * Init the system
 	 */
 	system_t::BIOS_setup(sensors);
+	coms->connect(INTERFACE_BOTH);
 
 	/*
 	 * Register the sensor caches

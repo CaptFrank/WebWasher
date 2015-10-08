@@ -18,6 +18,9 @@
  * Peripherals
  */
 #include <service/services/coms/coms.h>
+#include <service/services/system/system.h>
+#include <service/services/formatter/formatter.h>
+
 
 /*
  * Local task defines
@@ -51,7 +54,7 @@ class publish : public task_t {
 		 *
 		 * @param coms_srv				The coms service
 		 */
-		publish(coms_t* coms_srv);
+		publish();
 
 		/**
 		 * @brief The default deconstructor
@@ -68,11 +71,6 @@ class publish : public task_t {
 		 */
 		static const uint32_t 	interval		= PUB_TASK_INTERVAL;
 		static const uint32_t 	iterations		= PUB_TASK_ITERATIONS;
-
-		/*
-		 * Service handle
-		 */
-		static coms_t*			coms_service;
 
 		/**
 		 * @brief Publish task callback

@@ -17,8 +17,7 @@
 /*
  * Peripherals
  */
-#include <platform/platform.h>
-#include <service/services.h>
+#include <service/services/system/system.h>
 
 /*
  * Local task defines

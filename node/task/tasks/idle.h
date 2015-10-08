@@ -18,6 +18,7 @@
  * Peripherals
  */
 #include <service/services/coms/coms.h>
+#include <service/services/system/system.h>
 
 /*
  * Local task defines
@@ -48,7 +49,7 @@ class idle : public task_t {
 		 *
 		 * @param coms_srv				The coms service
 		 */
-		idle(coms_t* coms_srv);
+		idle();
 
 		/**
 		 * @brief The default deconstructor
@@ -65,11 +66,6 @@ class idle : public task_t {
 		 */
 		static const uint32_t 	interval		= IDLE_TASK_INTERVAL;
 		static const uint32_t 	iterations		= IDLE_TASK_ITERATIONS;
-
-		/*
-		 * Service handle
-		 */
-		static coms_t*			coms_service;
 
 		/**
 		 * @brief Idle task callback

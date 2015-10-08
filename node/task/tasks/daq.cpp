@@ -53,7 +53,7 @@ void daq::daq_task_cb(){
 	do{
 		sensor = (sensor_t*)&daq_t::sensors[index];
 		if(sensor){ // Valid check of the sensor
-			if(sensor->update()){
+			if(sensor->run()){
 				index ++;
 			}else{
 				system_t::BIOS_alert(BIOS_ALERT_TASK_FAIL);

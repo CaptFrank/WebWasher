@@ -10,46 +10,10 @@
 
 #include "Energia.h"
 
-/**
- * Cache types
- */
-typedef enum {
 
-	CACHE_TYPE_HEARTBEAT	= 0x0600,	//!< CACHE_TYPE_HEARTBEAT
-	CACHE_TYPE_STATUS		= 0x0400,	//!< CACHE_TYPE_STATUS
-	CACHE_TYPE_TEMP_DATA	= 0x0200,	//!< CACHE_TYPE_TEMP_DATA
-	CACHE_TYPE_ACC_DATA  	= 0x0001,	//!< CACHE_TYPE_ACC_DATA
-	CACHE_TYPE_ALL			= 0x0000,	//!< CACHE_TYPE_ALL
-}cache_t;
-
-/**
- * @brief The message types allowed
- */
-typedef enum {
-	MSG_TYPE_HEARTBEAT,		//!< MSG_TYPE_HEARTBEAT
-	MSG_TYPE_STATUS,   		//!< MSG_TYPE_STATUS
-	MSG_TYPE_TEMP_DATA,		//!< MSG_TYPE_TEMP_DATA
-	MSG_TYPE_ACC_DATA, 		//!< MSG_TYPE_ACC_DATA
-	MSG_TYPE_OTHER			//!< MSG_TYPE_OTHER
-}msg_type_t;
-
-/*
- * Local Typedefs
- */
-typedef uint16_t msg_length_t;
-typedef void* msg_data_t;
-
-
-/**
- * @brief The message type definition
- */
-typedef struct {
-
-	msg_length_t 	length;	// The message length
-	msg_data_t		data;	// The message data
-}msg_t;
-
-
+// =============================================
+//			CONFIGS CONFIGS CONFIGS
+// =============================================
 /**
  * @brief Easier Macros to use
  */
@@ -93,16 +57,16 @@ typedef struct {
 #define WIFI_SSID				("Haligonia Sensor Network")
 #define WIFI_PASS				("@Sensor!1!haligonia@")
 
-#define WIFI_LOCAL_IP			{0x0A, 0x00, 0x01, 0xC8} // 10.0.1.200
+const char WIFI_LOCAL_IP[4] 	= {0x0A, 0x00, 0x01, 0xC8}; // 10.0.1.200
 #define WIFI_LOCAL_IP_STR		("10.0.1.200")
 
-#define WIFI_LOCAL_DNS			{0x0A, 0x00, 0x01, 0x11} // 10.0.1.17
+const char WIFI_LOCAL_DNS[4] 	= {0x0A, 0x00, 0x01, 0x11}; // 10.0.1.17
 #define WIFI_LOCAL_DNS_STR		("10.0.1.17")
 
-#define WIFI_LOCAL_GATEWAY		{0x0A, 0x00, 0x01, 0x01} // 10.0.1.1
+const char WIFI_LOCAL_GATEWAY[4] = {0x0A, 0x00, 0x01, 0x01}; // 10.0.1.1
 #define WIFI_LOCAL_GATEWAY_STR	("10.0.1.1")
 
-#define WIFI_LOCAL_SUBNET		{0xFF, 0xFF, 0xFF, 0x00} // 255.255.255.0
+const char WIFI_LOCAL_SUBNET[4]	= {0xFF, 0xFF, 0xFF, 0x00}; // 255.255.255.0
 #define WIFI_LOCAL_SUBNET_STR	("255.255.255.0")
 
 #define WIFI_DEFAULT_TIMEOUT	1000
@@ -163,8 +127,115 @@ typedef struct {
  */
 #define MQTT_VERSION				(3)
 #define MQTT_SENSOR_ID				(1)
+#define MQTT_SENSOR_ID_STR			("Sensor_1")
 #define MQTT_USERNAME				("use-token-auth")
 #define MQTT_PASSWORD				("haligonia")
 #define MQTT_KEEP_ALIVE				(10)
+
+// =============================================
+//			CONFIGS CONFIGS CONFIGS
+// =============================================
+
+/**
+ * @brief Types of BIOS alarms
+ */
+typedef enum {
+
+	BIOS_ALERT_REBOOT,         			//!< BIOS_ALERT_REBOOT
+	BIOS_ALERT_COMS_FAIL,      			//!< BIOS_ALERT_COMS_FAIL
+	BIOS_ALERT_SENSOR_FAIL,    			//!< BIOS_ALERT_SENSOR_FAIL
+	BIOS_ALERT_SYSTEM_FAIL,    			//!< BIOS_ALERT_SYSTEM_FAIL
+	BIOS_ALERT_PROCESSING_FAIL,			//!< BIOS_ALERT_PROCESSING_FAIL
+	BIOS_ALERT_REGISTER_FAIL,			//!< BIOS_ALERT_REGISTER_FAIL
+	BIOS_ALERT_UPDATE_FAIL,				//!< BIOS_ALERT_UPDATE_FAIL
+	BIOS_ALERT_SCHEDULER_FAIL,			//!< BIOS_ALERT_SCHEDULER_FAIL
+	BIOS_ALERT_TASK_FAIL				//!< BIOS_ALERT_TASK_FAIL
+}bios_alerts_t;
+
+/**
+ * Types of reboot requests
+ */
+typedef enum {
+
+	/*
+	 * Services
+	 *
+	 * 	- System BIOS services
+	 * 	- Communication services
+	 */
+	BIOS_REBOOT_SYS_SOFT,				//!< BIOS_REBOOT_SYS_SOFT
+	BIOS_REBOOT_SYS_HARD,				//!< BIOS_REBOOT_SYS_HARD
+	BIOS_REBOOT_COMS,   				//!< BIOS_REBOOT_COMS
+
+	/*
+	 * Interfaces
+	 *
+	 * 	- MQTT Interface
+	 * 	- WIFI Interface
+	 * 	- Sensor Interface
+	 * 		- I2C
+	 * 		- SPI
+	 */
+	BIOS_REBOOT_MQTT,    				//!< BIOS_REBOOT_MQTT
+	BIOS_REBOOT_WIFI,    				//!< BIOS_REBOOT_WIFI
+
+	/*
+	 * OS
+	 */
+	BIOS_REBOOT_OS,       				//!< BIOS_REBOOT_OS
+	BIOS_REBOOT_SCHEDULER,				//!< BIOS_REBOOT_SCHEDULER
+	BIOS_REBOOT_TASK,					//!< BIOS_REBOOT_TASK
+}bios_reboot_t;
+
+/**
+ * Default system states
+ */
+typedef enum {
+	SYS_STATE_IDLE,  					//!< SYS_STATE_IDLE
+	SYS_STATE_SLEEP, 					//!< SYS_STATE_SLEEP
+	SYS_STATE_ACTIVE,					//!< SYS_STATE_ACTIVE
+	SYS_STATE_REBOOT,					//!< SYS_STATE_REBOOT
+	SYS_STATE_ERROR, 					//!< SYS_STATE_ERROR
+}sys_state_t;
+
+/**
+ * Cache types
+ */
+typedef enum {
+
+	CACHE_TYPE_HEARTBEAT	= 0x0600,	//!< CACHE_TYPE_HEARTBEAT
+	CACHE_TYPE_STATUS		= 0x0400,	//!< CACHE_TYPE_STATUS
+	CACHE_TYPE_TEMP_DATA	= 0x0200,	//!< CACHE_TYPE_TEMP_DATA
+	CACHE_TYPE_ACC_DATA  	= 0x0001,	//!< CACHE_TYPE_ACC_DATA
+	CACHE_TYPE_ALL			= 0x0000,	//!< CACHE_TYPE_ALL
+}cache_t;
+
+/**
+ * @brief The message types allowed
+ */
+typedef enum {
+	MSG_TYPE_HEARTBEAT,		//!< MSG_TYPE_HEARTBEAT
+	MSG_TYPE_STATUS,   		//!< MSG_TYPE_STATUS
+	MSG_TYPE_TEMP_DATA,		//!< MSG_TYPE_TEMP_DATA
+	MSG_TYPE_ACC_DATA, 		//!< MSG_TYPE_ACC_DATA
+	MSG_TYPE_OTHER			//!< MSG_TYPE_OTHER
+}msg_type_t;
+
+
+/*
+ * Local Typedefs
+ */
+typedef uint16_t msg_length_t;
+typedef void* msg_data_t;
+
+/**
+ * @brief The message type definition
+ */
+typedef struct {
+
+	msg_length_t 	length;	// The message length
+	msg_data_t		data;	// The message data
+}msg_t;
+
 
 #endif /* CONFIGS_H_ */

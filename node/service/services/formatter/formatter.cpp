@@ -236,7 +236,7 @@ msg_t* formatter::format(cache_t type){
 	/*
 	 * Create the string
 	 */
-	msg->data 	= string_table[type].string;
+	msg->data 		= string_table[type].string;
 	msg->length 	= strlen(string_table[type].string);
 	return msg;
 }

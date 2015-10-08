@@ -18,8 +18,8 @@
  * Peripherals
  */
 #include <platform/platform.h>
-#include <service/services.h>
 #include <platform/sensor/sensor/sensor.h>
+#include <service/services/system/system.h>
 
 /*
  * Local task defines
@@ -71,7 +71,7 @@ class daq : public task_t {
 		/*
 		 * Service handle
 		 */
-		static sensor_t*		sensors;
+		static sensor_t**		sensors;
 
 		/**
 		 * @brief Daq task callback

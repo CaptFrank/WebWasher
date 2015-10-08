@@ -17,6 +17,11 @@ scheduler::scheduler(){
 	 */
 	first 	= NULL;
 	last 	= NULL;
+
+	/*
+	 * Suspending queue init
+	 */
+	suspend_queue = new queue<thread_id_t>();
 }
 
 /**
@@ -171,7 +176,7 @@ void scheduler::disable_tasks(){
 	 * Temp
 	 */
 	task *current = first;
-	int counter	= system_t::suspend_queue->count();
+	int counter	= suspend_queue->count();
 
 	if (counter > 0){
 		/*
@@ -183,7 +188,7 @@ void scheduler::disable_tasks(){
 			 * Check the disable queue for disabling thread
 			 */
 			thread_id_t id = \
-					(thread_id_t)system_t::suspend_queue->pop();
+					(thread_id_t)suspend_queue->pop();
 
 			// Disable the task
 			while(current){
@@ -209,11 +214,6 @@ void scheduler::disable_tasks(){
  * @brief Runs the sceduler
  */
 void scheduler::run(){
-
-	/*
-	 * Update the state
-	 */
-	system_t::BIOS_state(SYS_STATE_ACTIVE);
 
 	/*
 	 * Check to see if we need to disable any tasks

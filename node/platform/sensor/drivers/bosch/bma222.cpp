@@ -120,7 +120,7 @@ bma222::bma222(bus_i2c_t* iface) : sensor_i2c(iface, BMA222_TRANSACTION_BYTE) {
  *
  * @return	bool 	true of the update was successful.
  */
-bool bma222::update(){
+bool bma222::run(){
 
 	/*
 	 * Return code

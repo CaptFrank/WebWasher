@@ -125,7 +125,7 @@ tmp006::tmp006(bus_i2c_t* iface) : sensor_i2c(iface, TMP006_TRANSACTION_BYTE){
  *
  * @return	bool 	true of the update was successful.
  */
-bool tmp006::update(){
+bool tmp006::run(){
 
 	/*
 	 * Return code
