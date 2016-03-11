@@ -4,7 +4,10 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := C:/Program Files/energia-0101E0015/hardware/tools/lm4f
+CG_TOOL_ROOT := C:/Users/Francis Papineau/Documents/energia-0101E0017/hardware/tools/lm4f
+
+GEN_OPTS__FLAG := 
+GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
 "./platform/sensor/sensor/math/fixed_t.o" \
@@ -31,7 +34,7 @@ ORDERED_OBJS += \
 "./task/tasks/update.o" \
 $(GEN_CMDS__FLAG) \
 -Wl,--start-group \
--Wl,-T"C:/Program Files/energia-0101E0015/hardware/cc3200/cores/cc3200/cc3200.ld" \
+-Wl,-T"C:/Users/Francis Papineau/Documents/energia-0101E0017/hardware/cc3200/cores/cc3200/cc3200.ld" \
 -l"lpcc3200_MQTTClient" \
 -l"lpcc3200_WiFi" \
 -l"lpcc3200_core" \
@@ -184,23 +187,17 @@ BIN_OUTPUTS__QUOTED += \
 # All Target
 all: node.out secondary-outputs
 
-dependents:
-	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug && $(MAKE) clean all
-	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug && $(MAKE) clean all
-	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug && $(MAKE) clean all
-	-cd C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug && $(MAKE) clean all
-
 # Tool invocations
-node.out: $(OBJS) $(GEN_CMDS) C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug/liblpcc3200_core.a C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug/liblpcc3200_WiFi.a C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug/liblpcc3200_MQTTClient.a C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug/liblpcc3200_Wire.a
+node.out: $(OBJS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU Linker'
-	"C:/Program Files/energia-0101E0015/hardware/tools/lm4f/bin/arm-none-eabi-gcc.exe" -march=armv7e-m -mthumb -fno-exceptions -DF_CPU=80000000L -DARDUINO=101 -DENERGIA=13 -Os -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall --entry ResetISR -nostartfiles -nostdlib -Wl,--gc-sections -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug" -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug" -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug" -L"C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug" -o"node.out" $(ORDERED_OBJS)
+	"C:/Users/Francis Papineau/Documents/energia-0101E0017/hardware/tools/lm4f/bin/arm-none-eabi-gcc.exe" -march=armv7e-m -mthumb -fno-exceptions -DF_CPU=80000000L -DARDUINO=101 -DENERGIA=13 -Os -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall --entry ResetISR -nostartfiles -nostdlib -Wl,--gc-sections -L"/Debug" -L"/Debug" -L"/Debug" -L"/Debug" -o"node.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 node.bin: $(EXE_OUTPUTS)
 	@echo 'Invoking: GNU Objcopy Utility'
-	"C:/Program Files/energia-0101E0015/hardware/tools/lm4f/bin/arm-none-eabi-objcopy.exe" -O binary $(EXE_OUTPUTS__QUOTED) "node.bin"
+	"C:/Users/Francis Papineau/Documents/energia-0101E0017/hardware/tools/lm4f/bin/arm-none-eabi-objcopy.exe" -O binary $(EXE_OUTPUTS__QUOTED) "node.bin"
 	@echo 'Finished building: $@'
 	@echo ' '
 
@@ -217,10 +214,6 @@ secondary-outputs: $(BIN_OUTPUTS)
 
 .PHONY: all clean dependents
 .SECONDARY:
-C:/Users/francis-ccs/workspace_v6_1/lpcc3200_core/Debug/liblpcc3200_core.a:
-C:/Users/francis-ccs/workspace_v6_1/lpcc3200_WiFi/Debug/liblpcc3200_WiFi.a:
-C:/Users/francis-ccs/workspace_v6_1/lpcc3200_MQTTClient/Debug/liblpcc3200_MQTTClient.a:
-C:/Users/francis-ccs/workspace_v6_1/lpcc3200_Wire/Debug/liblpcc3200_Wire.a:
 
 -include ../makefile.targets
 
