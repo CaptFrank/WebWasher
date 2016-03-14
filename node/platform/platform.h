@@ -20,13 +20,12 @@
  * Platform includes:
  * 	- I2c bus
  * 	- Sensors (tmp006, bma222)
- * 	- Wifi
  * 	- Mqtt
  */
-#include "iface/wifi.h"
 #include "iface/mqtt.h"
 #include "bus/i2c/bus_i2c.h"
 #include "sensor/drivers/drivers.h"
+
 /*
  * Include the queue
  */

@@ -18,12 +18,7 @@
  * @param stack		The stack instance
  * @param settings	The wifi settings strucutre
  */
-wifi::wifi(WifiIPStack* stack, wifi_attributes_t* settings){
-
-	/*
-	 * Assign the stack pointer to our own pointer
-	 */
-	stack_if = stack;
+wifi::wifi(wifi_attributes_t* settings){
 
 	/*
 	 * Assign the wifi_settings internally
@@ -47,15 +42,13 @@ wifi::wifi(WifiIPStack* stack, wifi_attributes_t* settings){
 	/*
 	 * Get the firmware versions
 	 */
-	attr->drv_ver = wifi_if->driverVersion();
-	attr->fw_ver = wifi_if->firmwareVersion();
+	attr->drv_ver = (char*)wifi_if->driverVersion();
+	attr->fw_ver = (char*)wifi_if->firmwareVersion();
 
 	/*
 	 * Check the internal pointers.
 	 */
-	if(stack_if
-			&& attr
-			&& wifi_if){
+	if(attr && wifi_if){
 
 		/*
 		 * Set the status to ok
@@ -142,11 +135,3 @@ WiFiClass* wifi::get_if(){
 	return wifi_if;
 }
 
-/**
- * @brief Gets the wifi internal stack handle.
- *
- * @return handle	The wifi handler stack handle.
- */
-WifiIPStack* wifi::get_stack(){
-	return stack_if;
-}

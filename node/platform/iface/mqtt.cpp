@@ -6,6 +6,66 @@
  */
 
 #include "mqtt.h"
+#include <platform/others/queue.h>
+
+/**
+ * Define a queue for the callback to insert the message in.
+ * Stores the pointers of the structures on the heap.
+ */
+static queue<mqtt_message_t*>* mqtt_msg_qeue = new queue<mqtt_message_t*>();
+
+/**
+ * @breif The Default callback for the MQTT engine.
+ *
+ * @param topic		The topic subscribed to
+ * @param payload	The payload to read
+ * @param length	The length
+ */
+void __default_callback(char* topic, byte* payload, unsigned int length){
+
+	// Structure
+	mqtt_message_t* msg;
+
+	/*
+	 * We need to compare the topic with the registered callbacks
+	 * We follow the following sequence to get the appropriate callback.
+	 * 	- Tokenize the topic (i.e. split "/")
+	 * 	- Compare the real topic name (i.e. /data/cmd/update)
+	 * 	- Trigger the callback
+	 */
+
+	/*
+	 * Notify the command
+	 */
+	NOTIFY_INFO("Found cmd: " + String(topic));
+
+	/*
+	 * Put the payload in a message struct and then put the pointer in
+	 * the queue.
+	 */
+	msg = (mqtt_message_t*)malloc(sizeof(mqtt_message_t));
+	msg->length 	= length;
+	msg->payload 	= payload;
+	msg->topic 		= topic;
+
+	/*
+	 * Push the data on the queue
+	 */
+	mqtt_msg_qeue->push(msg);
+
+	/*
+	 * Notify the USER
+	 */
+	digitalWrite(RECEIVE_LED, HIGH);
+	delay(MQTT_DELAY);
+	digitalWrite(RECEIVE_LED, LOW);
+
+	/*
+	 * Prevent memory leaks
+	 */
+	free(msg);
+	return;
+}
 
 /**
  * @brief The MQTT Interface Constructor
@@ -13,9 +73,10 @@
  * This is the entry method for the MQTT interface object.
  * We must pass the stack instance.
  *
- * @param ipstack		The stack instance
+ * @param wifistack		The stack instance
+ * @param mqttparams	The mqtt parameters
  */
-mqtt::mqtt(WifiIPStack* ipstack){
+mqtt::mqtt(Client* wifistack, mqtt_params_t* mqttparams){
 
 	/*
 	 * All is good
@@ -23,27 +84,42 @@ mqtt::mqtt(WifiIPStack* ipstack){
 	status = STATUS_OK;
 
 	/*
-	 * Set the interanl reference
+	 * Sanity check
 	 */
-	stack_if = ipstack;
+	if(!wifistack || !mqttparams){
+
+		/*
+		 * Error occured
+		 */
+		status = ERR_FAILURE_STATUS;
+	}
 
 	/*
-	 * Create the client
+	 * Set the parameters
 	 */
-	client_if = new \
-			MQTT::Client<WifiIPStack, Countdown, MQTT_MAX_PACKET_SIZE> (*stack_if);
+	client_if 	= wifistack;
+	mqtt_params = mqttparams;
+
+	/*
+	 * Create a new PubSubClient
+	 */
+	iface = new PubSubClient(
+		mqttparams->server_name,
+		mqttparams->server_port,
+		__default_callback,
+		*client_if
+	);
 
 	/*
 	 * Set the status
 	 */
-	if(!stack_if){
+	if(!iface){
 
 		/*
 		 * Error occured
 		 */
 		status = STATUS_ERR_DENIED;
 	}
-
 }
 
 /**
@@ -51,23 +127,14 @@ mqtt::mqtt(WifiIPStack* ipstack){
  *
  * This method connects this node to an mqtt server.
  *
- * @param address	The address to connect to
- * @param port 		The port to connect to
- *
  * @return status	The status
  */
-mqtt_status_t mqtt::connect(mqtt_broker_t address, mqtt_port_t port){
-
-	/*
-	 * Temp status
-	 */
-	wl_status_t temp_status;
-	int rc = -1;
+mqtt_status_t mqtt::connect(){
 
 	/*
 	 * Connect to the server through the ip interface
 	 */
-	if(!client_if->isConnected()){
+	if(!iface->connected()){
 
 		PRINT("Connecting to: "); 	PRINTLN(MQTT_BROKER_ADDR);
 		PRINT("With Sensor id: ");	PRINTLN(MQTT_SENSOR_ID);
@@ -75,50 +142,18 @@ mqtt_status_t mqtt::connect(mqtt_broker_t address, mqtt_port_t port){
 		/*
 		 * Connect
 		 */
-		while((temp_status = (wl_status_t)\
-				stack_if->connect(MQTT_BROKER_ADDR, \
-						MQTT_BROKER_PORT)) != WL_CONNECTED){
-
+		if(!iface->connect(mqtt_params->user)){
 
 			/*
-			 * Check the return code to see if its a valid error.
+			 * Error
 			 */
-			switch (temp_status){
-
-				/*
-				 * Connection Failed
-				 */
-				case WL_CONNECT_FAILED:
-				case WL_CONNECTION_LOST:
-				case WL_AP_MODE:
-				case WL_NO_SSID_AVAIL:
-				default:
-					status = STATUS_ERR_DENIED;
-					return MQTT_CONNECT_FAILED;
-				}
+			status = STATUS_ERR_DENIED;
+			return MQTT_CONNECT_FAILED;
 		}
 
 		PRINT("Connected to: "); 	PRINT(MQTT_BROKER_ADDR);
 		PRINT(":");					PRINTLN(MQTT_BROKER_PORT);
 	}
-
-	/*
-	 * Craft the connect request
-	 */
-    MQTTPacket_connectData options 	= \
-    		MQTTPacket_connectData_initializer;
-
-    options.MQTTVersion 			= MQTT_VERSION;
-    options.clientID.cstring 		= MQTT_SENSOR_ID_STR;
-    options.username.cstring 		= MQTT_USERNAME;
-    options.password.cstring 		= MQTT_PASSWORD;
-    options.keepAliveInterval 		= MQTT_KEEP_ALIVE;
-
-	/*
-	 * Connect the the mqtt broker
-	 */
-    while ((rc = client_if->connect(options)) != MQTT_SUCCESS_STATUS);
-    PRINTLN("Connected to the broker.");
 
     /*
      * Return the status
@@ -139,21 +174,12 @@ mqtt_status_t mqtt::disconnect(){
 	/*
 	 * Disconnect
 	 */
-	if(client_if->disconnect() != MQTT_SUCCESS_STATUS){
-
-		/*
-		 * Issue
-		 */
-		status = STATUS_ERR_DENIED;
-		return MQTT_DISCONNECT_FAILED;
-	}else{
-
-		/*
-		 * Good disconnect
-		 */
-		PRINTLN("Disconnected.");
-		return MQTT_DISCONNECTED;
-	}
+	iface->disconnect();
+	/*
+	 * Good disconnect
+	 */
+	PRINTLN("Disconnected.");
+	return MQTT_DISCONNECTED;
 }
 
 /**
@@ -164,7 +190,7 @@ mqtt_status_t mqtt::disconnect(){
  *
  * @return status	The status
  */
-mqtt_status_t mqtt::subscribe(mqtt_topic_t topic, mqtt_handler_t handler){
+mqtt_status_t mqtt::subscribe(mqtt_topic_t topic, mqtt_callback_entry_t* handler){
 
 	/*
 	 * Return code
@@ -178,36 +204,15 @@ mqtt_status_t mqtt::subscribe(mqtt_topic_t topic, mqtt_handler_t handler){
 	PRINTLN(topic);
 
 	/*
-	 * Make sure its not already registered
+	 * Register the callback with the topic
 	 */
-	if((rc = \
-			unsubscribe(topic)) != MQTT_SUCCESS_STATUS){
+
+	if((rc = __register_callback(handler)) != MQTT_SUCCESS_STATUS){
 
 		/*
-		 * Error occured
+		 * There was an error in registration.
 		 */
 		status = STATUS_ERR_DENIED;
-		return rc;
-	}
-
-	/*
-	 * Subscribe
-	 */
-	if((rc = \
-			(mqtt_status_t)client_if->subscribe(topic, MQTT::QOS0, handler)) \
-			!= MQTT_SUCCESS_STATUS){
-
-		/*
-		 * Error occured
-		 */
-		status = STATUS_ERR_DENIED;
-
-		/*
-		 * Issue subscribing
-		 */
-		PRINT("Subscribtion failed with rc: ");
-		PRINTLN(rc);
-
 		return rc;
 	}else{
 
@@ -220,27 +225,11 @@ mqtt_status_t mqtt::subscribe(mqtt_topic_t topic, mqtt_handler_t handler){
 }
 
 /**
- * @brief Unsubscribe a topic
- *
- * @param topic		The topic to unsubscribe.
- * @return status	The status code
- */
-mqtt_status_t mqtt::unsubscribe(mqtt_topic_t topic){
-
-	/*
-	 * Unsubscribe
-	 */
-	return (mqtt_status_t)unsubscribe(topic);
-}
-
-/**
  * @brief Publishes a message to a specified topic.
  *
- * @param topic		The topic to publich to
- * @param message	The message to publish
- * @return status	The status code
+ * @param mqtt_message 	An mqtt message type
  */
-mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message* message){
+mqtt_status_t mqtt::publish(mqtt_message_t* msg){
 
 	/*
 	 * Status
@@ -248,15 +237,24 @@ mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message* message){
 	mqtt_status_t rc;
 
 	/*
-	 * Setup the message
+	 * Sanity check
 	 */
-	message->qos 		= MQTT::QOS0;
-	message->retained 	= false;
+	if(!msg){
+
+		// Error
+		status = STATUS_ERR_DENIED;
+		return MQTT_FAILURE_STATUS;
+	}
 
 	/*
 	 * Publish
 	 */
-	rc = (mqtt_status_t)client_if->publish((const char*)topic, *message);
+	rc = (mqtt_status_t)iface->publish(
+		msg->topic,
+		msg->payload,
+		msg->length,
+		msg->retained
+	);
 
 	/*
 	 * Check for success
@@ -275,10 +273,139 @@ mqtt_status_t mqtt::publish(mqtt_topic_t topic, MQTT::Message* message){
 }
 
 /**
- * @brief Gets the wifi internal stack handle.
+ * @brief Runs the whole MQTT stack.
  *
- * @return handle	The wifi handler stack handle.
+ * @return status		The status
  */
-WifiIPStack* mqtt::get_stack(){
-	return stack_if;
+mqtt_status_t mqtt::run(){
+
+	/*
+	 * Temp value
+	 */
+	mqtt_status_t rc;
+
+	/*
+	 * All we do in this method is run the stack loop
+	 */
+	if(!iface->poll()){
+		return MQTT_FAILURE_STATUS;
+	}
+	else{
+
+		/*
+		 * Process the payload
+		 */
+		if((rc = __process()) != MQTT_SUCCESS_STATUS){
+			return MQTT_FAILURE_STATUS;
+		}
+		return MQTT_SUCCESS_STATUS;
+	}
 }
+
+/**
+ * @brief Process a payload from the queue.
+ */
+mqtt_status_t mqtt::__process(){
+
+	/*
+	 * The status
+	 */
+	mqtt_status_t rc;
+
+	/*
+	 * The read message from the queue
+	 */
+	mqtt_message_t* msg;
+
+	/*
+	 * Callback pointer
+	 */
+	mqtt_callback_entry_t* temp = callbacks;
+
+	/*
+	 * Gets the data from the queue and processes it.
+	 */
+	if(!mqtt_msg_qeue->isEmpty()){
+
+		NOTIFY_INFO("There is a msg to process.");
+
+		/*
+		 * Get the messages
+		 */
+		while(mqtt_msg_qeue->count() > 0){
+
+			/*
+			 * Get the message and trigger the callback
+			 */
+			msg = mqtt_msg_qeue->pop();
+			while(temp->next != NULL){
+
+				/*
+				 * Check for a match
+				 */
+				if(strcmp(temp->topic, msg->topic) == COMPARE_SUCCESS){
+
+					/*
+					 * We have a match... Now trigger the callback
+					 */
+					temp->callback(temp->context, msg->payload, msg->length);
+					return rc;
+				}
+			}
+
+			/*
+			 * Not a valid command
+			 */
+			NOTIFY_ERROR("Not a valid command: " + String(msg->topic));
+			rc = MQTT_FAILURE_STATUS;
+			return rc;
+		}
+	}
+}
+
+/**
+ * @brief Registers a new callback interface based on the topic
+ *
+ * @param entry 		The callback entry provided to register
+ */
+mqtt_status_t mqtt::__register_callback(mqtt_callback_entry_t* entry){
+
+	/*
+	 * Copy the internal pointer to edit
+	 */
+	mqtt_callback_entry_t* tmp = callbacks;
+
+	/*
+	 * Sanity check
+	 */
+	if(!entry){
+
+		/*
+		 * Null pointer
+		 */
+		status = STATUS_ERR_DENIED;
+		return MQTT_FAILURE_STATUS;
+	}
+
+	/*
+	 * Cycle to the end of the list
+	 */
+	while(tmp->next != NULL){
+		tmp = tmp->next;
+	}
+
+	/*
+	 * Create a new entry struct to enter the list.
+	 * We are now at the end of the list.
+	 */
+	tmp->next = (mqtt_callback_entry_t*)malloc(sizeof(mqtt_callback_entry_t));
+
+	/*
+	 * Copy over the new entry
+	 */
+	memcpy(tmp->next, entry, sizeof(mqtt_callback_entry_t));
+
+	status = STATUS_ERR_DENIED;
+	return MQTT_SUCCESS_STATUS;
+}
+

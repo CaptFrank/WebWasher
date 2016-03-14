@@ -9,6 +9,7 @@
 #define BUS_I2C_BUS_I2C_H_
 
 #include <Wire.h>
+#include <stdint.h>
 #include <platform/bus/bus.h>
 
 /**
@@ -47,6 +48,11 @@ typedef struct {
  */
 class bus_i2c: public bus {
 
+	/*
+	 * State the friend class
+	 */
+	friend TwoWire;
+
 	/**
 	 * Private class attributes
 	 */
@@ -83,7 +89,7 @@ class bus_i2c: public bus {
 		 *         requested number of Bytes in the event of an error.
 		 */
 		size_t read(uint8_t addr, i2c_bus_packet_t* packet);
-		size_t read(int addr, unsigned int  size, uint8_t index, uint8_t* data);
+		size_t read_bytes(int addr, int size, uint8_t index, uint8_t* data);
 
 		/*!
 		 * \brief Write multiple Bytes to a bus interface.
@@ -95,7 +101,7 @@ class bus_i2c: public bus {
 		 *         requested number of Bytes in the event of an error.
 		 */
 		size_t write(uint8_t addr, i2c_bus_packet_t* packet);
-		size_t write(int addr, unsigned int size, uint8_t index, uint8_t* data);
+		size_t write_bytes(int addr, unsigned int size, uint8_t index, uint8_t* data);
 
 		/*!
 		 * \brief Read a single Byte from a bus interface.
@@ -203,7 +209,7 @@ class bus_i2c: public bus {
 		 * @param data		The data pointer
 		 * @param packet	The packet pointer to copy into
 		 */
-		void packetize(size_t length, uint8_t addr, uint8_t* data,
+		void packetize(int length, uint8_t addr, uint8_t* data,
 				i2c_bus_packet_t* packet);
 
 		/*!

@@ -12,16 +12,9 @@
  *
  * This is the daq task constructor. It sets all
  * internal parameters to the task itself and enables it.
- *
- * @param sensors		The sensor interfaces
  */
-daq::daq(sensor_t* sensors[]) : \
+daq::daq() : \
 	task_t(interval, iterations, daq_task_cb, DAQ_THREAD_ID){
-
-	/*
-	 * Set the sensor table
-	 */
-	this->sensors = sensors;
 
 	/*
 	 * We enable the task right away
@@ -51,13 +44,13 @@ void daq::daq_task_cb(){
 	 * with the most pertinent data.
 	 */
 	do{
-		sensor = (sensor_t*)&daq_t::sensors[index];
+		sensor = (sensor_t*)&system_base::sensors_base[index];
 		if(sensor){ // Valid check of the sensor
 			if(sensor->run()){
 				index ++;
 			}else{
-				system_t::BIOS_alert(BIOS_ALERT_TASK_FAIL);
-				system_t::BIOS_reboot(BIOS_REBOOT_OS);
+				system_base::BIOS_alert(BIOS_ALERT_TASK_FAIL);
+				system_base::BIOS_reboot(BIOS_REBOOT_OS);
 			}
 		}
 	}while(sensor);

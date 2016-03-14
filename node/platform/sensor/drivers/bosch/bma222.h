@@ -397,7 +397,7 @@ class bma222: public sensor_i2c_t {
 		 * Attributes
 		 */
 		bma222_self_test_t				test;
-		static bma222_event_regs_t		regs;
+		bma222_event_regs_t				regs;
 		bma222_id_regs_t				id;
 
 		/*
@@ -409,32 +409,18 @@ class bma222: public sensor_i2c_t {
 		 * \brief Sensor Event Callback Descriptors
 		 * (data=0, motion=1, low-g=2, high-g=3, tap=4)
 		 */
-		static sensor_event_callback_t	callbacks	[5];
+		sensor_event_callback_t	callbacks[5];
 
 		/*
 		 * Bandwidth tables
 		 */
 
-		sensor_map_t 					range_table	[4] = {
-				{{ 2000}, BMA222_RANGE_2G		},
-				{{ 4000}, BMA222_RANGE_4G		},
-				{{ 8000}, BMA222_RANGE_8G		},
-				{{16000}, BMA222_RANGE_16G		}
-		};
+		sensor_map_t* 					range_table;
 
 		/**
 		 * \brief Bosch BMA222 Range Table (milli-g, register value)
 		 */
-		sensor_map_t					band_table	[8] = {
-				{{   8}, BMA222_BANDWIDTH_8Hz  	}, /*    7.81 Hz */
-				{{  16}, BMA222_BANDWIDTH_16Hz 	}, /*   15.63 Hz */
-				{{  31}, BMA222_BANDWIDTH_31Hz 	}, /*   31.25 Hz */
-				{{  63}, BMA222_BANDWIDTH_63Hz 	}, /*   62.50 Hz */
-				{{ 125}, BMA222_BANDWIDTH_125Hz	}, /*  125.00 Hz */
-				{{ 250}, BMA222_BANDWIDTH_250Hz	}, /*  250.00 Hz */
-				{{ 500}, BMA222_BANDWIDTH_500Hz	}, /*  500.00 Hz */
-				{{1000}, BMA222_BANDWIDTH_1000Hz} /* 1000.00 Hz */
-		};
+		sensor_map_t*					band_table;
 
 	/*
 	 * Public class methods

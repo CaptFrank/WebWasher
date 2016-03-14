@@ -26,6 +26,8 @@
 #define UPDATE_TASK_ITERATIONS			(-1)	// NO LIMIT
 #define UPDATE_THREAD_ID				(2)		// DEFAULT ID
 
+using namespace system_base;
+
 /**
  * @brief This is the cache updates task interface.
  *

@@ -5,6 +5,13 @@
 /*
  * Platform includes
  */
+#include <PubSubClient.h>
+#include <Wire.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiServer.h>
+#include <WiFiUdp.h>
+#include <Wire.h>
 #include <platform/platform.h>
 
 /*
@@ -16,6 +23,11 @@
  * System tasks includes
  */
 #include <task/tasks.h>
+
+/**
+ * Using the base system framework
+ */
+using namespace system_base;
 
 /*
  * Bus
@@ -34,14 +46,9 @@ bma222_t* bma222 	= new bma222_t(bus);
 sensor_t* sensors[NUMBER_OF_SENSORS + 1]	= {
 		(sensor_t*)tmp006,
 		(sensor_t*)bma222,
-		NULL
+		(sensor_t*)NULL
 };
 
-
-/*
- * Formatter
- */
-static formatter_t* format = new formatter_t();
 
 /*
  * Coms
@@ -62,7 +69,7 @@ static task_t* tasks[TASK_NUMBER] 	= {
 		 * Thread Id 	= 1
 		 * Interval 	= 100ms
 		 */
-		new daq_t		(sensors /*              */),
+		new daq_t		(/*  NULL         		*/),
 #endif
 
 #ifdef UPDATE_TASK_ENABLE
@@ -105,6 +112,11 @@ static task_t* tasks[TASK_NUMBER] 	= {
 
 void setup() {
 
+	/**
+	 * Temporary variable
+	 */
+	status_code_t result;
+
 	/*
 	 * In this function context, we would setup the systems peripherals
 	 * and instantiate a device database, containing the received data
@@ -121,19 +133,41 @@ void setup() {
 	/*
 	 * Init the system
 	 */
-	system_t::BIOS_setup(sensors);
-	coms->connect(INTERFACE_BOTH);
+	if((result = system_base::BIOS_setup(sensors)) != STATUS_OK){
+		NOTIFY_ERROR("Problem in BIOS setup : " + String(result));
+		BIOS_hang();
+	}
+	else if((result = system_base::BIOS_register_coms(coms)) != STATUS_OK){
+		NOTIFY_ERROR("Problem in BIOS coms register : " + String(result));
+		BIOS_hang();
+	}
+	else if((result = system_base::BIOS_connect()) != STATUS_OK){
+		NOTIFY_ERROR("Problem in BIOS coms connect : " + String(result));
+		BIOS_hang();
+	}
 
 	/*
 	 * Register the sensor caches
 	 */
-	system_t::BIOS_register((sensor_t*)tmp006);
-	system_t::BIOS_register((sensor_t*)bma222);
+	else if((result = system_base::BIOS_register((sensor_t*)tmp006)) != STATUS_OK){
+		NOTIFY_ERROR("Problem in BIOS sensor register (tmp006) : " + String(result));
+		BIOS_hang();
+	}
+	else if((result = system_base::BIOS_register((sensor_t*)bma222)) != STATUS_OK){
+		NOTIFY_ERROR("Problem in BIOS sensor register (bma222) : " + String(result));
+		BIOS_hang();
+	}
 
 	/*
 	 * Boot the OS
 	 */
-	system_t::BIOS_boot(tasks);
+	else if ((result = system_base::BIOS_boot(tasks)) != STATUS_OK){
+		NOTIFY_ERROR("Problem in BIOS boot : " + String(result));
+		BIOS_hang();
+	}
+	else {
+		NOTIFY_INFO("BIOS setup complete : " + String(result));
+	}
 }
 
 void loop() {
@@ -154,5 +188,6 @@ void loop() {
 	/*
 	 * Run the OS
 	 */
-	system_t::BIOS_run();
+	NOTIFY_INFO("Runnig the BIOS loop.");
+	system_base::BIOS_run();
 }

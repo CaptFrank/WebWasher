@@ -8,7 +8,11 @@
 #ifndef SENSORS_BUS_H_
 #define SENSORS_BUS_H_
 
-#include <Arduino.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdio.h>
 #include <status_codes.h>
 
 /*!
@@ -79,25 +83,25 @@ class bus {
 		 * \brief Read multiple Bytes from a bus interface.
 		 *
 		 * \param   addr    The device register or memory address.
-		 * \param   data    The destination read buffer address.
+		 * \param 	packet	The device packet to read into.
 		 *
 		 * \return The number of Bytes read, which may be less than the
 		 *         requested number of Bytes in the event of an error.
 		 */
-		virtual size_t read(uint8_t addr, bus_packet_t data);
-		virtual size_t read(uint8_t addr, uint8_t size, uint8_t index, uint8_t* data);
+		size_t read(uint8_t addr, bus_packet_t* packet);
+		size_t read_bytes(int addr, int size, uint8_t index, uint8_t* data);
 
 		/*!
 		 * \brief Write multiple Bytes to a bus interface.
 		 *
 		 * \param   addr    The device register or memory address.
-		 * \param   data    The source write buffer address.
+		 * \param 	packet	The device packet to write
 		 *
 		 * \return The number of Bytes written, which may be less than the
 		 *         requested number of Bytes in the event of an error.
 		 */
-		virtual size_t write(uint8_t addr, bus_packet_t data);
-		virtual size_t write(uint8_t addr, uint8_t size, uint8_t index, uint8_t* data);
+		size_t write(uint8_t addr, bus_packet_t* packet);
+		size_t write_bytes(int addr, unsigned int size, uint8_t index, uint8_t* data);
 
 		/*!
 		 * \brief Determine the existence of a bus device
@@ -123,10 +127,10 @@ class bus {
 		 * \param   bus     An initialized bus interface descriptor.
 		 * \param   addr    The device register or memory address.
 		 * \param   mask    The mask of the field to set.
-		 *
+		 * \param	index	The memory index to get
 		 * \return  The value stored in the register or memory field.
 		 */
-		virtual uint8_t reg_fieldget(uint8_t addr, uint8_t mask);
+		virtual uint8_t reg_fieldget(uint8_t addr, uint8_t index, uint8_t mask);
 
 		/*!
 		 * \brief Write a field stored at a device register or memory address
@@ -141,10 +145,11 @@ class bus {
 		 * \param   addr    The device register or memory address.
 		 * \param   mask    The mask of the field to set.
 		 * \param   value   The value of the field to set.
+		 * \param	index	The memory index to get
 		 *
 		 * \return  Nothing
 		 */
-		virtual void reg_fieldset(uint8_t addr, uint8_t mask, uint8_t value);
+		virtual void reg_fieldset(uint8_t addr, uint8_t mask, uint8_t value, uint8_t index);
 
 		/*!
 		 * \brief Read a single Byte from a bus interface.

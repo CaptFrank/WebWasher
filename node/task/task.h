@@ -8,7 +8,6 @@
 #ifndef TASK_TASK_H_
 #define TASK_TASK_H_
 
-#include "Energia.h"
 #include <configs.h>
 
 /**

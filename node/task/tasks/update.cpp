@@ -34,6 +34,6 @@ void update::update_task_cb(){
 	 * We call the BIOS to update the tasks
 	 * iteratively
 	 */
-	system_t::BIOS_update(CACHE_TYPE_ALL);
+	system_base::BIOS_update(CACHE_TYPE_ALL);
 	return;
 }

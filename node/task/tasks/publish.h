@@ -17,7 +17,6 @@
 /*
  * Peripherals
  */
-#include <service/services/coms/coms.h>
 #include <service/services/system/system.h>
 #include <service/services/formatter/formatter.h>
 
@@ -30,6 +29,8 @@
 #define PUB_THREAD_ID				(3)		// DEFAULT ID
 
 #define PUB_SLEEP					(1000)	// Sleep for 1sec
+
+using namespace system_base;
 
 /**
  * @brief This is the publish task interface.
@@ -51,8 +52,6 @@ class publish : public task_t {
 		 *
 		 * This is the publish task constructor. It sets all
 		 * internal parameters to the task itself and enables it.
-		 *
-		 * @param coms_srv				The coms service
 		 */
 		publish();
 

@@ -21,7 +21,7 @@ scheduler::scheduler(){
 	/*
 	 * Suspending queue init
 	 */
-	suspend_queue = new queue<thread_id_t>();
+	scheduler::suspend_queue = new queue<thread_id_t>();
 }
 
 /**

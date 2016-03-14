@@ -436,24 +436,20 @@ class tmp006: public sensor_i2c_t {
 		bool edit_conf(uint16_t value);
 
 		/**
-		 * \brief Set a sensor operational threshold.
+		 * @brief Get event threshold value
 		 *
-		 * \param   threshold   A specified sensor operational threshold.
-		 * \param   value       The value of the specified threshold.
-		 * \return  bool     true if the call succeeds, else false is returned.
+		 * @param threshold Address of threshold descriptor.
+		 * @return bool     true if the call succeeds, else false is returned.
 		 */
-		bool set_threshold(sensor_threshold_t threshold, int16_t value);
+		bool get_threshold(sensor_threshold_desc_t *threshold);
 
 		/**
-		 * \brief Get a sensor operational threshold.
+		 * @brief Set event threshold value
 		 *
-		 * \param   sensor      The address of an initialized sensor descriptor.
-		 * \param   threshold   A specified sensor operational threshold.
-		 * \param   value       Address of location to return threshold value
-		 *
-		 * \return  bool     true if the call succeeds, else false is returned.
+		 * @param threshold Address of threshold descriptor.
+		 * @return bool     true if the call succeeds, else false is returned.
 		 */
-		bool get_threshold(sensor_threshold_t threshold, int16_t *value);
+		bool set_threshold(sensor_threshold_desc_t *threshold);
 
 };
 

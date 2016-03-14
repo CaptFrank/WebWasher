@@ -2,7 +2,14 @@
 *.slo
 *.lo
 *.o
-*.obj
+**.obj
+*node/.settings
+*node/.launches
+*node/Debug/
+*node/.ccsproject
+*node/.cproject
+*node/.project
+*node/.ccxml
 
 # Precompiled Headers
 *.gch

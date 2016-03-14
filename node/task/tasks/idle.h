@@ -17,7 +17,6 @@
 /*
  * Peripherals
  */
-#include <service/services/coms/coms.h>
 #include <service/services/system/system.h>
 
 /*
@@ -26,6 +25,8 @@
 #define IDLE_TASK_INTERVAL			(500)	// EXECUTE EVERY 500 ms
 #define IDLE_TASK_ITERATIONS		(-1)	// NO LIMIT
 #define IDLE_THREAD_ID				(0)		// DEFAULT ID
+
+using namespace system_base;
 
 /**
  * @brief This is the idle task interface.
@@ -46,8 +47,6 @@ class idle : public task_t {
 		 *
 		 * This is the idle task constructor. It sets all
 		 * internal parameters to the task itself and enables it.
-		 *
-		 * @param coms_srv				The coms service
 		 */
 		idle();
 

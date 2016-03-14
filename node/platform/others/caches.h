@@ -40,39 +40,6 @@ typedef struct {
 		uint8_t 				version;
 		uint8_t					id;
 	}device_data;
-
-	struct {
-		struct{
-			uint8_t 			status;
-			string_t			broker;
-			uint16_t			port;
-			uint8_t				ver;
-			uint8_t				id;
-
-			struct {
-				struct {
-					string_t 	temp;
-					string_t 	acc;
-					string_t 	status;
-				}pub;
-				struct{
-					string_t 	glob;
-					string_t 	local;
-				}sub;
-			}topics;
-		}mqtt_data;
-
-		struct{
-			uint8_t 			status;
-			uint8_t 			socket;
-			string_t			ip;
-			uint16_t 			timeout;
-			string_t			ssid;
-			string_t			gw;
-			string_t 			dns;
-			string_t			subnet;
-		}ip_data;
-	}coms_data;
 }status_cache_t;
 
 

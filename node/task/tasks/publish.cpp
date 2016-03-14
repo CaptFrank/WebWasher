@@ -12,8 +12,6 @@
  *
  * This is the publish task constructor. It sets all
  * internal parameters to the task itself and enables it.
- *
- * @param coms_srv				The coms service
  */
 publish::publish() : \
 	task_t(interval, iterations, publish_task_cb, PUB_THREAD_ID){
@@ -38,22 +36,12 @@ void publish::publish_task_cb(){
 	msg_t* json;
 
 	/*
-	 * Formatter
-	 */
-	extern formatter_t* format;
-
-	/*
-	 * Coms
-	 */
-	extern coms_t* coms;
-
-	/*
 	 * Message types to send off.
 	 *
 	 * - Status
 	 * - Data
 	 */
-	cache_list_t* cache = system_t::list;
+	cache_list_t* cache = system_base::list;
 
 	/*
 	 * We iterate through the message types to send and we
@@ -70,12 +58,12 @@ void publish::publish_task_cb(){
 			/*
 			 * Format the cache
 			 */
-			json = format->format(cache->type);
+			json = formatter_t::format(cache->type);
 
 			/*
 			 * Send the string the the mqtt component
 			 */
-			coms->send(cache->msg, json);
+			system_base::system_coms->send(cache->msg, json);
 			delay(PUB_SLEEP); // sleep for a bit
 		}
 

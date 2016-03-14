@@ -11,7 +11,7 @@
 /*
  * Include the task definition
  */
-#include "task.h"
+#include <task/task.h>
 #include <status_codes.h>
 #include <platform/others/queue.h>
 
@@ -48,7 +48,7 @@ class scheduler {
 		/*
 		 * Suspending queue
 		 */
-		static queue<thread_id_t>* suspend_queue;
+		queue<thread_id_t>* suspend_queue;
 
 		/**
 		 * @brief The default object constructor.
@@ -97,6 +97,13 @@ class scheduler {
 		 * @brief The default deconstructor.
 		 */
 		~scheduler(){}
+
+		/**
+		 * @brief Gets the queue
+		 */
+		queue<thread_id_t>* get_queue(){
+			return this->suspend_queue;
+		}
 };
 
 /**< @brief Typedef for the scheduler */

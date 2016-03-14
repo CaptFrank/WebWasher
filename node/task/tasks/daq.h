@@ -28,6 +28,8 @@
 #define DAQ_TASK_ITERATIONS			(-1)	// NO LIMIT
 #define DAQ_THREAD_ID				(1)		// DEFAULT ID
 
+using namespace system_base;
+
 /**
  * @brief This is the daq task interface.
  *
@@ -36,6 +38,11 @@
  * data from the onboard sensors.
  */
 class daq : public task_t {
+
+	/*
+	 * Friend class
+	 */
+	friend sensor_t;
 
 	/*
 	 * Public access methods
@@ -47,10 +54,8 @@ class daq : public task_t {
 		 *
 		 * This is the daq task constructor. It sets all
 		 * internal parameters to the task itself and enables it.
-		 *
-		 * @param sensors		The sensor interfaces
 		 */
-		daq(sensor_t* sensors[]);
+		daq();
 
 		/**
 		 * @brief The default deconstructor
@@ -67,11 +72,6 @@ class daq : public task_t {
 		 */
 		static const uint32_t 	interval		= DAQ_TASK_INTERVAL;
 		static const uint32_t 	iterations		= DAQ_TASK_ITERATIONS;
-
-		/*
-		 * Service handle
-		 */
-		static sensor_t**		sensors;
 
 		/**
 		 * @brief Daq task callback

@@ -26,7 +26,7 @@ bus_i2c::bus_i2c() : bus(){
 	/*
 	 * Start the I2C Engine
 	 */
-	busif->begin(I2C_MASTER_ADDRESS);
+	busif->begin();
 }
 
 
@@ -84,7 +84,7 @@ size_t bus_i2c::read(uint8_t addr, i2c_bus_packet_t* packet){
 	return (read);
 }
 
-size_t bus_i2c::read(int addr, unsigned int  size,
+size_t bus_i2c::read_bytes(int addr, int size,
 						uint8_t index, uint8_t* data){
 
 	// Container
@@ -94,7 +94,7 @@ size_t bus_i2c::read(int addr, unsigned int  size,
 	/*
 	 * Packetize
 	 */
-	packetize(size, index, data, &packet);
+	this->packetize(size, index, data, &packet);
 
 	/*
 	 * Read
@@ -146,7 +146,7 @@ size_t bus_i2c::write(uint8_t addr, i2c_bus_packet_t* packet){
 	return (written);
 }
 
-size_t bus_i2c::write(int addr, unsigned int size,
+size_t bus_i2c::write_bytes(int addr, unsigned int size,
 						uint8_t index, uint8_t* data){
 
 	// Container
@@ -374,7 +374,7 @@ void bus_i2c::get_data(void* rec, i2c_bus_packet_t* packet, size_t size){
  * @param data		The data pointer
  * @param packet	The packet pointer to copy into
  */
-void packetize(size_t length, uint8_t addr, uint8_t* data,
+void bus_i2c::packetize(int length, uint8_t addr, uint8_t* data,
 		i2c_bus_packet_t* packet){
 
 	/*

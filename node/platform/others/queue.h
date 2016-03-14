@@ -46,7 +46,7 @@
 #define _QUEUELIST_H
 
 // include Arduino basic header.
-#include <Arduino.h>
+//#include <Arduino.h>
 
 // the definition of the queue class.
 template<typename T>

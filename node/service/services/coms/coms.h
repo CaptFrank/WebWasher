@@ -8,17 +8,13 @@
 #ifndef SERVICE_SERVICES_COMS_H_
 #define SERVICE_SERVICES_COMS_H_
 
+#include <WiFi.h>
 #include <string.h>
-#include <Countdown.h>
-#include <MQTTClient.h>
+#include <PubSubClient.h>
 #include <status_codes.h>
 
-#include <task/task.h>
-#include <platform/iface/mqtt.h>
 #include <platform/iface/wifi.h>
-
-#include <service/services/formatter/formatter.h>
-#include <service/services/system/system.h>
+#include <platform/iface/mqtt.h>
 
 /*
  * Local Defines
@@ -47,6 +43,29 @@ typedef enum {
 	COMMAND_TYPE_MAX_SIZE   //!< COMMAND_TYPE_MAX_SIZE
 }command_t;
 
+/**
+ * This is the union that defines the
+ * packet and the construction mecanism.
+ */
+typedef union {
+
+	/*
+	 * The struct that contains both the command
+	 * and the arguments.
+	 *
+	 * [PACKET [ COMMAND ] [ ARGUMENT ] ]
+	 */
+	struct {
+		uint8_t command;
+		uint8_t argument;
+	}components;
+
+	/*
+	 * The packet.s
+	 */
+	uint16_t packet;
+
+}packet_t;
 
 /**
  * @brief The command map definiton
@@ -76,7 +95,7 @@ typedef enum {
  *
  * @extends service_t
  */
-class coms_svr {
+class coms_service {
 
 	/*
 	 * Public method access
@@ -89,12 +108,12 @@ class coms_svr {
 		 * This is where we initialize the interfaces; both the
 		 * MQTT interface and the underlying wifi interface.
 		 */
-		coms_svr();
+		coms_service();
 
 		/**
 		 * @brief The default deconstructor for the comms object.
 		 */
-		~coms_svr(){};
+		~coms_service(){};
 
 		/**
 		 * @brief Connects to the wifi hotspot and to the mqtt broker.
@@ -130,26 +149,16 @@ class coms_svr {
 		mqtt_status_t send(msg_type_t msg_type, msg_t* msg);
 
 		/**
-		 * @brief Processes a request
+		 * @brief Processes a local request
 		 *
 		 * This processes a received message from the mqtt borker.
 		 *
-		 * @param 	command			The command type received
-		 * @param	msg				The message data
-		 * @return 	status			The status of the operation
+		 * @param obj		The object to use
+		 * @param payload	The payload array
+		 * @param length 	The payload length
+		 * @return status	The status of the operation
 		 */
-		status_code_t process(command_t command, msg_t* msg);
-
-		/**
-		 * @brief The callback for a subscription
-		 *
-		 * This is the callback for the topic subscription.
-		 * It is invoked when there is a message that corresponds
-		 * to a topic specified is received.
-		 *
-		 * @param md				The message descriptor
-		 */
-		static void coms_callback(MQTT::MessageData& md);
+		static status_code_t __process_local(void* obj, void* payload, uint16_t length);
 
 	/*
 	 * public attrbute access
@@ -163,8 +172,8 @@ class coms_svr {
 		/*
 		 * Comms interfaces
 		 */
-		wifi_t* 			wifi_if;
 		mqtt_t* 			mqtt_if;
+		mqtt_params_t		mqtt_params;
 
 		/* ===========================
 		 * Comms interface attributes
@@ -173,26 +182,12 @@ class coms_svr {
 		/*
 		 * Wifi
 		 */
-		WifiIPStack* 		ip_stack;
-		wifi_attributes_t 	wifi_attr;
+		WiFiClient 			wifi_stack;
+
+		wifi_t*				wifi_if;
+		wifi_attributes_t 	wifi_attrs;
 };
 
-typedef coms_svr coms_t;
-
-/**
- * MQTT Callback function
- */
-
-/**
- * @brief The default callback function for the MQTT engine.
- *
- * 	This method is called when there is a new message that is received
- * 	from the mqtt interface.
- *
- * @param topic			The topic that the message is received in
- * @param payload		The actual payload of the message
- * @param length		The length of the message
- */
-extern void callback(char* topic, byte* payload, unsigned int length);
+typedef coms_service coms_t;
 
 #endif /* SERVICE_SERVICES_COMS_H_ */

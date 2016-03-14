@@ -593,7 +593,9 @@ class sensor {
 		/**
 		 * @brief Virtual method to run the update
 		 */
-		virtual bool run();
+		bool run(){
+			return false;
+		}
 
 
 	/*
@@ -680,7 +682,9 @@ class sensor {
 		 *
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool get_device_id();
+		bool get_device_id(){
+			return false;
+		}
 
 		/**
 		 * \brief Read sensor data
@@ -712,7 +716,9 @@ class sensor {
 		 * \param   type    Type of read operation to perform.
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool read(sensor_read_t type);
+		bool read(sensor_read_t type){
+			return false;
+		}
 
 		/**
 		 * \brief Calibrate a sensor device.
@@ -722,7 +728,9 @@ class sensor {
 		 * \param   info    Unimplemented (ignored) parameter.
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool calibrate(sensor_calibration_t caltype, int code, void *info);
+		bool calibrate(sensor_calibration_t caltype, int code, void *info){
+			return false;
+		}
 
 		/**
 		 * \brief Initiate a sensor device software reset.
@@ -730,7 +738,9 @@ class sensor {
 		 * \param   arg     Device-specific argument options.
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool reset(int arg);
+		bool reset(int arg){
+			return false;
+		}
 
 		/**
 		 * \brief Set a sensor device to low-power or standby mode.
@@ -738,27 +748,29 @@ class sensor {
 		 * \param   arg     Device-specific argument options.
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool sleep(int arg);
+		bool sleep(int arg){
+			return false;
+		}
 
 		/**
-		 * \brief Set a sensor operational threshold.
+		 * @brief Set event threshold value
 		 *
-		 * \param   threshold   A specified sensor operational threshold.
-		 * \param   value       The value of the specified threshold.
-		 * \return  bool     true if the call succeeds, else false is returned.
+		 * @param threshold Address of threshold descriptor.
+		 * @return bool     true if the call succeeds, else false is returned.
 		 */
-		virtual bool set_threshold(sensor_threshold_t threshold, int16_t value);
+		bool set_threshold(sensor_threshold_desc_t *threshold){
+			return false;
+		}
 
 		/**
-		 * \brief Get a sensor operational threshold.
+		 * @brief Get event threshold value
 		 *
-		 * \param   sensor      The address of an initialized sensor descriptor.
-		 * \param   threshold   A specified sensor operational threshold.
-		 * \param   value       Address of location to return threshold value
-		 *
-		 * \return  bool     true if the call succeeds, else false is returned.
+		 * @param threshold Address of threshold descriptor.
+		 * @return bool     true if the call succeeds, else false is returned.
 		 */
-		virtual bool get_threshold(sensor_threshold_t threshold, int16_t *value);
+		bool get_threshold(sensor_threshold_desc_t *threshold){
+			return false;
+		}
 
 		/**
 		 * \brief Execute a sensor device control function.
@@ -767,7 +779,9 @@ class sensor {
 		 * \param   arg     Specifies command parameters (varies by command).
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool ioctl(sensor_command_t cmd, void *arg);
+		bool ioctl(sensor_command_t cmd, void *arg){
+			return false;
+		}
 
 		/**
 		 * \brief Activate a sensor self-test function.
@@ -776,7 +790,9 @@ class sensor {
 		 * \param arg       Device-specific self-test argument options.
 		 * \return bool     true if the test succeeds, else false is returned.
 		 */
-		virtual bool selftest(int *test_code, void *arg);
+		bool selftest(int *test_code, void *arg){
+			return false;
+		}
 
 		/**
 		 * \brief Set a sensor mode.
@@ -800,7 +816,9 @@ class sensor {
 		 * \param   mode    A specified sensor operational mode.
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool set_state(sensor_state_t mode);
+		bool set_state(sensor_state_t mode){
+			return false;
+		}
 
 		/**
 		 * \brief Get a sensor mode.
@@ -824,7 +842,9 @@ class sensor {
 		 * \param   mode    The current sensor mode is returned to this location.
 		 * \return  bool    true if the call succeeds, else false is returned.
 		 */
-		virtual bool get_state(sensor_state_t *mode);
+		bool get_state(sensor_state_t *mode){
+			return false;
+		}
 
 		/**
 		 * \brief Enable a sensor event handler.

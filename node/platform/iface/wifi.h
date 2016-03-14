@@ -8,8 +8,7 @@
 #ifndef SERVICES_COMMS_WIFI_H_
 #define SERVICES_COMMS_WIFI_H_
 
-#include <Wifi.h>
-#include <WifiIPStack.h>
+#include <WiFi.h>
 #include <status_codes.h>
 
 
@@ -60,7 +59,6 @@ class wifi {
 		 * Interfaces
 		 */
 		WiFiClass*			wifi_if;		/**< The wifi interface */
-		WifiIPStack*		stack_if;		/**< The IP stack on the wifi stack */
 
 		/*
 		 * Attributes
@@ -87,7 +85,7 @@ class wifi {
 		 * @param stack		The stack instance
 		 * @param settings	The wifi settings strucutre
 		 */
-		wifi(WifiIPStack* stack, wifi_attributes_t* settings);
+		wifi(wifi_attributes_t* settings);
 
 		/**
 		 * @brief The Default Deconstructor for the class.
@@ -131,13 +129,6 @@ class wifi {
 	     * @return handle	The wifi class handle
 	     */
 	    WiFiClass* get_if();
-
-	    /**
-	     * @brief Gets the wifi internal stack handle.
-	     *
-	     * @return handle	The wifi handler stack handle.
-	     */
-	    WifiIPStack* get_stack();
 
 	    /**
 	     * @brief Gets the internal status of the driver.

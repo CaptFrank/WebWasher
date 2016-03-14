@@ -7,6 +7,24 @@
 
 #include <platform/sensor/drivers/bosch/bma222.h>
 
+sensor_map_t ranges[4] = {
+		{{ 2000}, BMA222_RANGE_2G		},
+		{{ 4000}, BMA222_RANGE_4G		},
+		{{ 8000}, BMA222_RANGE_8G		},
+		{{16000}, BMA222_RANGE_16G		}
+};
+
+sensor_map_t bands	[8] = {
+		{{   8}, BMA222_BANDWIDTH_8Hz  	}, /*    7.81 Hz */
+		{{  16}, BMA222_BANDWIDTH_16Hz 	}, /*   15.63 Hz */
+		{{  31}, BMA222_BANDWIDTH_31Hz 	}, /*   31.25 Hz */
+		{{  63}, BMA222_BANDWIDTH_63Hz 	}, /*   62.50 Hz */
+		{{ 125}, BMA222_BANDWIDTH_125Hz	}, /*  125.00 Hz */
+		{{ 250}, BMA222_BANDWIDTH_250Hz	}, /*  250.00 Hz */
+		{{ 500}, BMA222_BANDWIDTH_500Hz	}, /*  500.00 Hz */
+		{{1000}, BMA222_BANDWIDTH_1000Hz} /* 1000.00 Hz */
+};
+
 /*!
  *\brief The default constructor for the class.
  *
@@ -86,6 +104,12 @@ bma222::bma222(bus_i2c_t* iface) : sensor_i2c(iface, BMA222_TRANSACTION_BYTE) {
 		 * Set cache type
 		 */
 		cache_type				= CACHE_TYPE_ACC_DATA;
+
+		/*
+		 * Set internal maps
+		 */
+		range_table 			= ranges;
+		band_table				= bands;
 
 		/* Check bus status and return true if ok */
 		if ((STATUS_OK == bus->get_status())
@@ -485,7 +509,7 @@ bool bma222::get_device_id(){
 	/*
 	 * Get the device id
 	 */
-	if(sizeof(bma222_id_regs_t) != bus->read(
+	if(sizeof(bma222_id_regs_t) != bus->read_bytes(
 				BMA222_I2C_ADDR,				// Destination
 				sizeof(bma222_id_regs_t),		// Size to read
 				(uint8_t)BMA222_CHIP_ID,		// Memory index to read from
@@ -523,7 +547,7 @@ bool bma222::get_temp(){
 	/*
 	 * Get the device id
 	 */
-	if(sizeof(int8_t) != bus->read(
+	if(sizeof(int8_t) != bus->read_bytes(
 				BMA222_I2C_ADDR,				// Destination
 				sizeof(int8_t),					// Size to read
 				(uint8_t)BMA222_TEMP,			// Memory index to read from
@@ -567,7 +591,7 @@ bool bma222::get_acc(){
 	/*
 	 * Get the device id
 	 */
-	if(sizeof(uint8_t) != bus->read(
+	if(sizeof(uint8_t) != bus->read_bytes(
 				BMA222_I2C_ADDR,				// Destination
 				sizeof(regs.acc),				// Size to read
 				hal.burst_addr,					// Memory index to read from
@@ -910,7 +934,7 @@ void bma222::isr(void* sensor, void *arg){
 	/*
 	 * Read what event has happened
 	 */
-	bus->read(	BMA222_I2C_ADDR,
+	bus->read_bytes(	BMA222_I2C_ADDR,
 				sizeof(bma222_event_regs_t),
 				hal.burst_addr,
 				(uint8_t*)&regs);

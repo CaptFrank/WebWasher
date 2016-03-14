@@ -297,13 +297,12 @@ bool tmp006::sleep(int arg){
 }
 
 /**
- * \brief Set a sensor operational threshold.
+ * @brief Set event threshold value
  *
- * \param   threshold   A specified sensor operational threshold.
- * \param   value       The value of the specified threshold.
- * \return  bool     true if the call succeeds, else false is returned.
+ * @param threshold Address of threshold descriptor.
+ * @return bool     true if the call succeeds, else false is returned.
  */
-bool tmp006::set_threshold(sensor_threshold_t threshold, int16_t value){
+bool tmp006::set_threshold(sensor_threshold_desc_t *threshold){
 
 	/*
 	 * This threshold routine is not supported in the
@@ -314,15 +313,12 @@ bool tmp006::set_threshold(sensor_threshold_t threshold, int16_t value){
 }
 
 /**
- * \brief Get a sensor operational threshold.
+ * @brief Get event threshold value
  *
- * \param   sensor      The address of an initialized sensor descriptor.
- * \param   threshold   A specified sensor operational threshold.
- * \param   value       Address of location to return threshold value
- *
- * \return  bool     true if the call succeeds, else false is returned.
+ * @param threshold Address of threshold descriptor.
+ * @return bool     true if the call succeeds, else false is returned.
  */
-bool tmp006::get_threshold(sensor_threshold_t threshold, int16_t *value){
+bool tmp006::get_threshold(sensor_threshold_desc_t *threshold){
 
 	/*
 	 * This threshold routine is not supported in the
@@ -582,7 +578,7 @@ bool tmp006::get_device_id(){
 	/*
 	 * Get the device id
 	 */
-	if(bus->read(
+	if(bus->read_bytes(
 				TMP006_I2C_ADDR,				// Destination
 				sizeof(tmp006_id_regs_t),		// Size to read
 				(uint8_t)TMP006_ID_ADDR,		// Memory index to read from
@@ -679,7 +675,7 @@ bool tmp006::get_obj_temp(){
  */
 bool tmp006::get_die_temp(){
 
-	if(TMP006_TRANSACTION_BYTE != bus->read(
+	if(TMP006_TRANSACTION_BYTE != bus->read_bytes(
 				TMP006_I2C_ADDR,				// Destination
 				TMP006_TRANSACTION_BYTE,		// Size to read
 				(uint8_t)TMP006_TEMPERATURE,	// Memory index to read from
@@ -716,7 +712,7 @@ bool tmp006::get_die_temp(){
  */
 bool tmp006::get_volt(){
 
-	if(TMP006_TRANSACTION_BYTE != bus->read(
+	if(TMP006_TRANSACTION_BYTE != bus->read_bytes(
 				TMP006_I2C_ADDR,				// Destination
 				TMP006_TRANSACTION_BYTE,		// Size to read
 				(uint8_t)TMP006_VOLTAGE,		// Memory index to read from
@@ -817,7 +813,7 @@ bool tmp006::set_conv_rate (tmp006_conv_rate_t *rate){
  */
 bool tmp006::get_conv_rate (tmp006_conv_rate_t *rate){
 
-	if(sizeof(tmp006_event_regs_t) != bus->read(
+	if(sizeof(tmp006_event_regs_t) != bus->read_bytes(
 				TMP006_I2C_ADDR,					// Destination
 				sizeof(tmp006_event_regs_t),		// Size to read
 				(uint8_t)TMP006_BURST_ADDR,			// Memory index to read from
@@ -845,7 +841,7 @@ bool tmp006::get_conv_rate (tmp006_conv_rate_t *rate){
  */
 bool tmp006::edit_conf(uint16_t value){
 
-	if(TMP006_TRANSACTION_BYTE != bus->read(
+	if(TMP006_TRANSACTION_BYTE != bus->read_bytes(
 				TMP006_I2C_ADDR,					// Destination
 				TMP006_TRANSACTION_BYTE,			// Size to read
 				(uint8_t)TMP006_CONFIGURATION,		// Memory index to read from

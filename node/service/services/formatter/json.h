@@ -54,34 +54,6 @@
 												"verion:%d,"			\
 												"id:%d"					\
 											"}, "						\
-											"coms:{"					\
-												"mqtt:{"				\
-													"broker:%s,"		\
-													"port:%d,"			\
-													"ver:%d,"			\
-													"id:%d,"			\
-													"topics:{"			\
-														"pub:{"			\
-															"temp:%s,"	\
-															"acc:%s,"	\
-															"stat:%s"	\
-														"},"			\
-														"sub:{"			\
-															"glob:%s,"	\
-															"local:%s,"	\
-														"},"			\
-													"},"				\
-												"},"					\
-												"ip:{"					\
-													"socket:%d,"		\
-													"ip:%s,"			\
-													"timeout:%d,"		\
-													"ssid:%s,"			\
-													"gw:%s,"			\
-													"dns:%s,"			\
-													"subnet:%s,"		\
-												"},"					\
-											"},"						\
 										"}"								\
 
 /*!
